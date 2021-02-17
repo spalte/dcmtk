@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2015-2023, Open Connections GmbH
  *
+>>>>>>> f2f7b5ee0 ([Backport] Fixed extra padding created for some segmentations.)
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation are maintained by
