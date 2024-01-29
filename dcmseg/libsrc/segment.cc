@@ -26,7 +26,13 @@
 #include "dcmtk/dcmseg/segment.h"
 #include "dcmtk/dcmseg/segtypes.h"
 
-OFCondition DcmSegment::create(DcmSegment*& segment,
+// Explicit template instantiation
+template class DCMTK_DCMSEG_EXPORT DcmSegment<Uint8>;
+template class DCMTK_DCMSEG_EXPORT DcmSegment<Uint16>;
+
+
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::create(DcmSegment*& segment,
                                const OFString& segmentLabel,
                                const CodeSequenceMacro& segmentedPropertyCategory,
                                const CodeSequenceMacro& segmentedPropertyType,
@@ -66,7 +72,8 @@ OFCondition DcmSegment::create(DcmSegment*& segment,
     return result;
 }
 
-OFCondition DcmSegment::read(DcmItem& item, const OFBool clearOldData)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::read(DcmItem& item, const OFBool clearOldData)
 {
     if (clearOldData)
         clearData();
@@ -90,7 +97,8 @@ OFCondition DcmSegment::read(DcmItem& item, const OFBool clearOldData)
     return EC_Normal;
 }
 
-OFCondition DcmSegment::write(DcmItem& item)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::write(DcmItem& item)
 {
     OFCondition result;
     result = m_SegmentDescription.write(item);
@@ -116,7 +124,8 @@ OFCondition DcmSegment::write(DcmItem& item)
     return result;
 }
 
-void DcmSegment::clearData()
+template<typename BitsAlloc>
+void DcmSegment<BitsAlloc>::clearData()
 {
     m_SegmentDescription.clearData();
     m_SegmentAlgorithmName.clear();
@@ -127,13 +136,15 @@ void DcmSegment::clearData()
     m_TrackingUID.clear();
 }
 
-DcmSegment::~DcmSegment()
+template<typename BitsAlloc>
+DcmSegment<BitsAlloc>::~DcmSegment()
 {
     clearData();
 }
 
 // protected default constructor
-DcmSegment::DcmSegment()
+template<typename BitsAlloc>
+DcmSegment<BitsAlloc>::DcmSegment()
     : m_SegmentationDoc(NULL)
     , m_SegmentDescription()
     , m_SegmentAlgorithmName(DCM_SegmentAlgorithmName)
@@ -147,7 +158,8 @@ DcmSegment::DcmSegment()
     initIODRules();
 }
 
-void DcmSegment::initIODRules()
+template<typename BitsAlloc>
+void DcmSegment<BitsAlloc>::initIODRules()
 {
     m_Rules.addRule(new IODRule(DCM_SegmentAlgorithmName, "1", "1C", "SegmentationImageModule", DcmIODTypes::IE_IMAGE),
                     OFTrue);
@@ -163,7 +175,8 @@ void DcmSegment::initIODRules()
 
 // -------------- getters --------------------
 
-Uint16 DcmSegment::getSegmentNumber()
+template<typename BitsAlloc>
+Uint16 DcmSegment<BitsAlloc>::getSegmentNumber()
 {
     Uint16 value = 0;
     if (m_SegmentationDoc != NULL)
@@ -182,57 +195,68 @@ Uint16 DcmSegment::getSegmentNumber()
     return value;
 }
 
-OFCondition DcmSegment::getSegmentLabel(OFString& value, const signed long pos)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::getSegmentLabel(OFString& value, const signed long pos)
 {
     return m_SegmentDescription.getSegmentLabel(value, pos);
 }
 
-OFCondition DcmSegment::getSegmentDescription(OFString& value, const signed long pos)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::getSegmentDescription(OFString& value, const signed long pos)
 {
     return m_SegmentDescription.getSegmentDescription(value, pos);
 }
 
-DcmSegTypes::E_SegmentAlgoType DcmSegment::getSegmentAlgorithmType()
+template<typename BitsAlloc>
+DcmSegTypes::E_SegmentAlgoType DcmSegment<BitsAlloc>::getSegmentAlgorithmType()
 {
     return m_SegmentDescription.getSegmentAlgorithmType();
 }
 
-OFCondition DcmSegment::getSegmentAlgorithmName(OFString& value, const signed long pos)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::getSegmentAlgorithmName(OFString& value, const signed long pos)
 {
     return DcmIODUtil::getStringValueFromElement(m_SegmentAlgorithmName, value, pos);
 }
 
-GeneralAnatomyMacro& DcmSegment::getGeneralAnatomyCode()
+template<typename BitsAlloc>
+GeneralAnatomyMacro& DcmSegment<BitsAlloc>::getGeneralAnatomyCode()
 {
     return m_SegmentDescription.getGeneralAnatomyCode();
 }
 
-AlgorithmIdentificationMacro& DcmSegment::getSegmentationAlgorithmIdentification()
+template<typename BitsAlloc>
+AlgorithmIdentificationMacro& DcmSegment<BitsAlloc>::getSegmentationAlgorithmIdentification()
 {
     return m_SegmentationAlgorithmIdentification;
 }
 
-CodeSequenceMacro& DcmSegment::getSegmentedPropertyCategoryCode()
+template<typename BitsAlloc>
+CodeSequenceMacro& DcmSegment<BitsAlloc>::getSegmentedPropertyCategoryCode()
 {
     return m_SegmentDescription.getSegmentedPropertyCategoryCode();
 }
 
-CodeSequenceMacro& DcmSegment::getSegmentedPropertyTypeCode()
+template<typename BitsAlloc>
+CodeSequenceMacro& DcmSegment<BitsAlloc>::getSegmentedPropertyTypeCode()
 {
     return m_SegmentDescription.getSegmentedPropertyTypeCode();
 }
 
-OFVector<CodeSequenceMacro*>& DcmSegment::getSegmentedPropertyTypeModifierCode()
+template<typename BitsAlloc>
+OFVector<CodeSequenceMacro*>& DcmSegment<BitsAlloc>::getSegmentedPropertyTypeModifierCode()
 {
     return m_SegmentDescription.getSegmentedPropertyTypeModifier();
 }
 
-OFCondition DcmSegment::getRecommendedDisplayGrayscaleValue(Uint16& value, const unsigned long pos)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::getRecommendedDisplayGrayscaleValue(Uint16& value, const unsigned long pos)
 {
     return m_RecommendedDisplayGrayscaleValue.getUint16(value, pos);
 }
 
-OFCondition DcmSegment::getRecommendedDisplayCIELabValue(Uint16& L, Uint16& a, Uint16& b)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::getRecommendedDisplayCIELabValue(Uint16& L, Uint16& a, Uint16& b)
 {
     OFCondition result = m_RecommendedDisplayCIELabValue.getUint16(L, 0);
     if (result.good())
@@ -244,29 +268,34 @@ OFCondition DcmSegment::getRecommendedDisplayCIELabValue(Uint16& L, Uint16& a, U
     return result;
 }
 
-OFCondition DcmSegment::getTrackingID(OFString& value, const signed long pos)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::getTrackingID(OFString& value, const signed long pos)
 {
     return DcmIODUtil::getStringValueFromElement(m_TrackingID, value, pos);
 }
 
-OFCondition DcmSegment::getTrackingUID(OFString& value, const signed long pos)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::getTrackingUID(OFString& value, const signed long pos)
 {
     return DcmIODUtil::getStringValueFromElement(m_TrackingUID, value, pos);
 }
 
 // -------------- setters --------------------
 
-OFCondition DcmSegment::setSegmentLabel(const OFString& value, const OFBool checkValue)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::setSegmentLabel(const OFString& value, const OFBool checkValue)
 {
     return m_SegmentDescription.setSegmentLabel(value, checkValue);
 }
 
-OFCondition DcmSegment::setSegmentDescription(const OFString& value, const OFBool checkValue)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::setSegmentDescription(const OFString& value, const OFBool checkValue)
 {
     return m_SegmentDescription.setSegmentDescription(value, checkValue);
 }
 
-OFCondition DcmSegment::setSegmentAlgorithm(const DcmSegTypes::E_SegmentAlgoType algoType,
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::setSegmentAlgorithm(const DcmSegTypes::E_SegmentAlgoType algoType,
                                             const OFString& algoName,
                                             const OFBool checkValue)
 {
@@ -302,7 +331,8 @@ OFCondition DcmSegment::setSegmentAlgorithm(const DcmSegTypes::E_SegmentAlgoType
     return result;
 }
 
-OFCondition DcmSegment::setSegmentationAlgorithmIdentification(const AlgorithmIdentificationMacro& value,
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::setSegmentationAlgorithmIdentification(const AlgorithmIdentificationMacro& value,
                                                                const OFBool checkValue)
 {
     m_SegmentationAlgorithmIdentification = value;
@@ -320,12 +350,14 @@ OFCondition DcmSegment::setSegmentationAlgorithmIdentification(const AlgorithmId
     return result;
 }
 
-OFCondition DcmSegment::setRecommendedDisplayGrayscaleValue(const Uint16 value, const OFBool)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::setRecommendedDisplayGrayscaleValue(const Uint16 value, const OFBool)
 {
     return m_RecommendedDisplayGrayscaleValue.putUint16(value, 0);
 }
 
-OFCondition DcmSegment::setRecommendedDisplayCIELabValue(const Uint16 r, const Uint16 g, const Uint16 b, const OFBool)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::setRecommendedDisplayCIELabValue(const Uint16 r, const Uint16 g, const Uint16 b, const OFBool)
 {
     OFCondition result = m_RecommendedDisplayCIELabValue.putUint16(r, 0);
     if (result.good())
@@ -335,14 +367,16 @@ OFCondition DcmSegment::setRecommendedDisplayCIELabValue(const Uint16 r, const U
     return result;
 }
 
-OFCondition DcmSegment::setTrackingID(const OFString& value, const OFBool checkValue)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::setTrackingID(const OFString& value, const OFBool checkValue)
 {
     // avoid compile warning on unused variable
     (void)checkValue;
     return m_TrackingID.putOFStringArray(value);
 }
 
-OFCondition DcmSegment::setTrackingUID(const OFString& value, const OFBool checkValue)
+template<typename BitsAlloc>
+OFCondition DcmSegment<BitsAlloc>::setTrackingUID(const OFString& value, const OFBool checkValue)
 {
     OFCondition result;
     if (checkValue)
@@ -356,7 +390,8 @@ OFCondition DcmSegment::setTrackingUID(const OFString& value, const OFBool check
     return result;
 }
 
-void DcmSegment::referenceSegmentationDoc(DcmSegmentation* doc)
+template<typename BitsAlloc>
+void DcmSegment<BitsAlloc>::referenceSegmentationDoc(DcmSegmentation<BitsAlloc>* doc)
 {
     this->m_SegmentationDoc = doc;
 }

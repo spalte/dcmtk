@@ -26,7 +26,6 @@
 
 #include "dcmtk/dcmdata/dcvrus.h"
 #include "dcmtk/dcmiod/iodmacro.h"
-#include "dcmtk/dcmseg/segdoc.h"
 #include "dcmtk/dcmseg/segtypes.h"
 
 /** Class representing a segment from the Segment Identification Sequence,
@@ -34,6 +33,10 @@
  *  Description Macro.
  */
 
+template<class>
+class DcmSegmentation;
+
+template<typename BitsAlloc>
 class DCMTK_DCMSEG_EXPORT DcmSegment
 {
 
@@ -273,7 +276,7 @@ protected:
      *  Segmentation.
      *  @param  doc Pointer to the Segmentation object
      */
-    void referenceSegmentationDoc(DcmSegmentation* doc);
+    void referenceSegmentationDoc(DcmSegmentation<BitsAlloc>* doc);
 
 private:
     /** Private undefined copy constructor
@@ -286,7 +289,7 @@ private:
     DcmSegment& operator=(const DcmSegment&);
 
     /// The segmentation document where this segment is located in
-    DcmSegmentation* m_SegmentationDoc;
+    DcmSegmentation<BitsAlloc>* m_SegmentationDoc;
 
     /// Segment Description Macro
     SegmentDescriptionMacro m_SegmentDescription;

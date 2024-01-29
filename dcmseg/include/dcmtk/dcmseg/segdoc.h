@@ -37,17 +37,18 @@
 #include "dcmtk/dcmiod/modmultiframefg.h"        // for multi-frame functional group module
 #include "dcmtk/dcmiod/modsegmentationseries.h"  // for segmentation series module
 #include "dcmtk/dcmseg/segdef.h"
+#include "dcmtk/dcmseg/segment.h"
 #include "dcmtk/dcmseg/segtypes.h" // for segmentation data types
 #include "dcmtk/ofstd/ofvector.h"  // for OFVector
 
-// Forward declarations
-class DcmSegment;
 class FGSegmentation;
 class FGDerivationImage;
 
 /** Class representing an object of the "Segmentation SOP Class".
  */
-class DCMTK_DCMSEG_EXPORT DcmSegmentation : public DcmIODImage<IODImagePixelModule<Uint8> >
+
+template <typename BitsAlloc>
+class DCMTK_DCMSEG_EXPORT DcmSegmentation : public DcmIODImage<IODImagePixelModule<BitsAlloc> >
 {
 
 public:
@@ -288,14 +289,14 @@ public:
      *  @param  segmentNumber The logical segment number
      *  @return The segment if segment number is valid, NULL otherwise
      */
-    virtual DcmSegment* getSegment(const size_t segmentNumber);
+    virtual DcmSegment<BitsAlloc>* getSegment(const size_t segmentNumber);
 
     /** Get logical segment number by providing a pointer to a given segment
      *  @param  segment The segment to find the logical segment number for
      *  @param  segmentNumber The segment number. 0 if segment could not be found.
      *  @return OFTrue if segment could be found, OFFalse otherwise.
      */
-    virtual OFBool getSegmentNumber(const DcmSegment* segment, size_t& segmentNumber);
+    virtual OFBool getSegmentNumber(const DcmSegment<BitsAlloc>* segment, size_t& segmentNumber);
 
     /** Reference to the Performed Procedure Step that led to the creation of this
      *  segmentation object. This is required if this object is created in an MPPS
@@ -324,7 +325,7 @@ public:
      *          this segment. Contains 0 if adding failed.
      *  @return EC_Normal if adding was successful, error otherwise
      */
-    virtual OFCondition addSegment(DcmSegment* seg, Uint16& segmentNumber);
+    virtual OFCondition addSegment(DcmSegment<BitsAlloc>* seg, Uint16& segmentNumber);
 
     /** Add a functional group for all frames
      *  @param  group The group to be added as shared functional group. The
@@ -433,7 +434,7 @@ protected:
     /** Protected default constructor. Library users should the factory create..()
      *  method in order to create an object from scratch
      */
-    DcmSegmentation();
+    DcmSegmentation<BitsAlloc>();
 
     /** Overwrites DcmIODImage::read()
      *  @param  dataset The dataset to read from
@@ -629,7 +630,7 @@ private:
     DcmUnsignedShort m_MaximumFractionalValue;
 
     /// Segment descriptions from Segment Sequence
-    OFVector<DcmSegment*> m_Segments;
+    OFVector<DcmSegment<BitsAlloc> *> m_Segments;
 
     /// Multi-frame Functional Groups high level interface
     FGInterface m_FGInterface;

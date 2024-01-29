@@ -34,13 +34,18 @@
 #include "dcmtk/dcmseg/segment.h"
 #include "dcmtk/dcmseg/segutils.h"
 
+// Explicit template instantiation
+template class DCMTK_DCMSEG_EXPORT DcmSegmentation<Uint8>;
+template class DCMTK_DCMSEG_EXPORT DcmSegmentation<Uint16>;
+
 // default constructor (protected, instance creation via create() function)
-DcmSegmentation::DcmSegmentation()
-    : DcmSegmentation::IODImage(OFin_place<IODImagePixelModule<Uint8> >)
-    , m_SegmentationSeries(DcmSegmentation::IODImage::getData(), DcmSegmentation::IODImage::getRules())
-    , m_EnhancedGeneralEquipmentModule(DcmSegmentation::IODImage::getData(), DcmSegmentation::IODImage::getRules())
-    , m_FG(DcmSegmentation::IODImage::getData(), DcmSegmentation::IODImage::getRules())
-    , m_DimensionModule(DcmSegmentation::IODImage::getData(), DcmSegmentation::IODImage::getRules())
+template <typename BitsAlloc>
+DcmSegmentation<BitsAlloc>::DcmSegmentation()
+    : DcmSegmentation<BitsAlloc>::IODImage(OFin_place<IODImagePixelModule<BitsAlloc> >)
+    , m_SegmentationSeries(DcmSegmentation<BitsAlloc>::IODImage::getData(), DcmSegmentation<BitsAlloc>::IODImage::getRules())
+    , m_EnhancedGeneralEquipmentModule(DcmSegmentation<BitsAlloc>::IODImage::getData(), DcmSegmentation<BitsAlloc>::IODImage::getRules())
+    , m_FG(DcmSegmentation<BitsAlloc>::IODImage::getData(), DcmSegmentation<BitsAlloc>::IODImage::getRules())
+    , m_DimensionModule(DcmSegmentation<BitsAlloc>::IODImage::getData(), DcmSegmentation<BitsAlloc>::IODImage::getRules())
     , m_Frames()
     , m_ImageType("DERIVED\\PRIMARY")
     , m_ContentIdentificationMacro()
@@ -50,52 +55,55 @@ DcmSegmentation::DcmSegmentation()
     , m_Segments()
     , m_FGInterface()
 {
-    DcmSegmentation::initIODRules();
+    DcmSegmentation<BitsAlloc>::initIODRules();
 }
 
-void DcmSegmentation::initIODRules()
+template <typename BitsAlloc>
+void DcmSegmentation<BitsAlloc>::initIODRules()
 {
     // ------------ Segmentation Image Module -------------
 
     // Partly overrides rules from General Image Module
-    getRules()->addRule(new IODRule(DCM_ImageType, "2", "1", "SegmentationImageModule", DcmIODTypes::IE_IMAGE), OFTrue);
-    getRules()->addRule(new IODRule(DCM_SegmentationType, "1", "1", "SegmentationImageModule", DcmIODTypes::IE_IMAGE),
+    typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->addRule(new IODRule(DCM_ImageType, "2", "1", "SegmentationImageModule", DcmIODTypes::IE_IMAGE), OFTrue);
+    typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->addRule(new IODRule(DCM_SegmentationType, "1", "1", "SegmentationImageModule", DcmIODTypes::IE_IMAGE),
                         OFTrue);
-    getRules()->addRule(
+    typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->addRule(
         new IODRule(DCM_SegmentationFractionalType, "1", "1C", "SegmentationImageModule", DcmIODTypes::IE_IMAGE),
         OFTrue);
-    getRules()->addRule(
+    typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->addRule(
         new IODRule(DCM_MaximumFractionalValue, "1", "1C", "SegmentationImageModule", DcmIODTypes::IE_IMAGE), OFTrue);
 
     // Re-use General Image Module instead of Segmentation Image Module
-    getRules()->addRule(new IODRule(DCM_LossyImageCompression, "1", "1", "GeneralImageModule", DcmIODTypes::IE_IMAGE),
+    typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->addRule(new IODRule(DCM_LossyImageCompression, "1", "1", "GeneralImageModule", DcmIODTypes::IE_IMAGE),
                         OFTrue);
-    getRules()->addRule(
+    typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->addRule(
         new IODRule(DCM_LossyImageCompressionMethod, "1-n", "1C", "GeneralImageModule", DcmIODTypes::IE_IMAGE), OFTrue);
-    getRules()->addRule(
+    typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->addRule(
         new IODRule(DCM_LossyImageCompressionRatio, "1-n", "1C", "GeneralImageModule", DcmIODTypes::IE_IMAGE), OFTrue);
 
     // Override rule from General Series Module
-    getRules()->addRule(new IODRule(DCM_ReferencedPerformedProcedureStepSequence,
+    typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->addRule(new IODRule(DCM_ReferencedPerformedProcedureStepSequence,
                                     "1",
                                     "1C",
                                     "SegmentationSeriesModule",
                                     DcmIODTypes::IE_SERIES),
                         OFTrue);
-    getRules()->addRule(new IODRule(DCM_SeriesNumber, "1", "1", "SegmentationSeriesModule", DcmIODTypes::IE_SERIES),
+    typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->addRule(new IODRule(DCM_SeriesNumber, "1", "1", "SegmentationSeriesModule", DcmIODTypes::IE_SERIES),
                         OFTrue);
 
     // Instance Number is also used within Content Identification Macro, disable it there
     m_ContentIdentificationMacro.getIODRules().deleteRule(DCM_InstanceNumber);
 }
 
-DcmSegmentation::~DcmSegmentation()
+template <typename BitsAlloc>
+DcmSegmentation<BitsAlloc>::~DcmSegmentation()
 {
     clearData();
 }
 
 // static method for loading segmentation objects
-OFCondition DcmSegmentation::loadFile(const OFString& filename, DcmSegmentation*& segmentation)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::loadFile(const OFString& filename, DcmSegmentation*& segmentation)
 {
     DcmFileFormat dcmff;
     DcmDataset* dataset = NULL;
@@ -107,10 +115,11 @@ OFCondition DcmSegmentation::loadFile(const OFString& filename, DcmSegmentation*
 }
 
 // static method for loading segmentation objects
-OFCondition DcmSegmentation::loadDataset(DcmDataset& dataset, DcmSegmentation*& segmentation)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::loadDataset(DcmDataset& dataset, DcmSegmentation*& segmentation)
 {
     segmentation       = NULL;
-    OFCondition result = DcmSegmentation::decompress(dataset);
+    OFCondition result = DcmSegmentation<BitsAlloc>::decompress(dataset);
     if (result.bad())
         return result;
 
@@ -132,7 +141,8 @@ OFCondition DcmSegmentation::loadDataset(DcmDataset& dataset, DcmSegmentation*& 
     return result;
 }
 
-OFCondition DcmSegmentation::loadConcatenation(ConcatenationLoader& cl,
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::loadConcatenation(ConcatenationLoader& cl,
                                                const OFString& concatenationUID,
                                                DcmSegmentation*& segmentation)
 {
@@ -164,7 +174,8 @@ OFCondition DcmSegmentation::loadConcatenation(ConcatenationLoader& cl,
     return result;
 }
 
-OFCondition DcmSegmentation::createBinarySegmentation(DcmSegmentation*& segmentation,
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::createBinarySegmentation(DcmSegmentation*& segmentation,
                                                       const Uint16 rows,
                                                       const Uint16 columns,
                                                       const IODGeneralEquipmentModule::EquipmentInfo& equipmentInfo,
@@ -180,7 +191,8 @@ OFCondition DcmSegmentation::createBinarySegmentation(DcmSegmentation*& segmenta
     return result;
 }
 
-OFCondition DcmSegmentation::createFractionalSegmentation(DcmSegmentation*& segmentation,
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::createFractionalSegmentation(DcmSegmentation*& segmentation,
                                                           const Uint16 rows,
                                                           const Uint16 columns,
                                                           const DcmSegTypes::E_SegmentationFractionalType fractType,
@@ -199,7 +211,8 @@ OFCondition DcmSegmentation::createFractionalSegmentation(DcmSegmentation*& segm
     return result;
 }
 
-OFCondition DcmSegmentation::createCommon(DcmSegmentation*& segmentation,
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::createCommon(DcmSegmentation*& segmentation,
                                           const Uint16 rows,
                                           const Uint16 columns,
                                           const IODGeneralEquipmentModule::EquipmentInfo& equipmentInfo,
@@ -244,8 +257,9 @@ OFCondition DcmSegmentation::createCommon(DcmSegmentation*& segmentation,
     return result;
 }
 
+template <typename BitsAlloc>
 FGDerivationImage*
-DcmSegmentation::createDerivationImageFG(const OFVector<ImageSOPInstanceReferenceMacro>& derivationImages,
+DcmSegmentation<BitsAlloc>::createDerivationImageFG(const OFVector<ImageSOPInstanceReferenceMacro>& derivationImages,
                                          const OFString& derivationDescription)
 {
     CodeSequenceMacro derivationCode("113076", "DCM", "Segmentation");
@@ -253,7 +267,8 @@ DcmSegmentation::createDerivationImageFG(const OFVector<ImageSOPInstanceReferenc
     return FGDerivationImage::createMinimal(derivationImages, derivationDescription, derivationCode, purpose);
 }
 
-OFCondition DcmSegmentation::read(DcmItem& dataset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::read(DcmItem& dataset)
 {
 
     OFCondition result = readWithoutPixelData(dataset);
@@ -262,7 +277,8 @@ OFCondition DcmSegmentation::read(DcmItem& dataset)
     return result;
 }
 
-OFCondition DcmSegmentation::readWithoutPixelData(DcmItem& dataset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::readWithoutPixelData(DcmItem& dataset)
 {
     OFString sopClass;
     if (DcmIODUtil::checkSOPClass(&dataset, UID_SegmentationStorage, sopClass).bad())
@@ -272,7 +288,7 @@ OFCondition DcmSegmentation::readWithoutPixelData(DcmItem& dataset)
     }
 
     // Read attributes in base classes
-    DcmSegmentation::IODImage::read(dataset);
+    DcmSegmentation<BitsAlloc>::IODImage::read(dataset);
 
     // Read Segmentation Series Module
     m_SegmentationSeries.read(dataset);
@@ -301,32 +317,37 @@ OFCondition DcmSegmentation::readWithoutPixelData(DcmItem& dataset)
 
     // Read specific segmentation elements
     DcmIODUtil::getAndCheckElementFromDataset(
-        dataset, m_MaximumFractionalValue, getRules()->getByTag(DCM_MaximumFractionalValue));
+        dataset, m_MaximumFractionalValue, typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->getByTag(DCM_MaximumFractionalValue));
 
     return EC_Normal;
 }
 
-void DcmSegmentation::setCheckFGOnWrite(const OFBool doCheck)
+template <typename BitsAlloc>
+void DcmSegmentation<BitsAlloc>::setCheckFGOnWrite(const OFBool doCheck)
 {
     m_FGInterface.setCheckOnWrite(doCheck);
 }
 
-OFBool DcmSegmentation::getCheckFGOnWrite()
+template <typename BitsAlloc>
+OFBool DcmSegmentation<BitsAlloc>::getCheckFGOnWrite()
 {
     return m_FGInterface.getCheckOnWrite();
 }
 
-void DcmSegmentation::setCheckDimensionsOnWrite(const OFBool doCheck)
+template <typename BitsAlloc>
+void DcmSegmentation<BitsAlloc>::setCheckDimensionsOnWrite(const OFBool doCheck)
 {
     m_DimensionModule.setCheckOnWrite(doCheck);
 }
 
-OFBool DcmSegmentation::getCheckDimensionsOnWrite()
+template <typename BitsAlloc>
+OFBool DcmSegmentation<BitsAlloc>::getCheckDimensionsOnWrite()
 {
     return m_DimensionModule.getCheckOnWrite();
 }
 
-OFCondition DcmSegmentation::writeWithSeparatePixelData(DcmItem& dataset, Uint8*& pixData, size_t& pixDataLength)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::writeWithSeparatePixelData(DcmItem& dataset, Uint8*& pixData, size_t& pixDataLength)
 {
     // FGInterface::write() will know whether it has to check FG structure
     // so we do not need to check FG structure here (OFFalse).
@@ -338,9 +359,9 @@ OFCondition DcmSegmentation::writeWithSeparatePixelData(DcmItem& dataset, Uint8*
     OFCondition result;
 
     // -- Set constant default values written by external modules --
-    getGeneralImage().setLossyImageCompression("00");
-    getGeneralImage().setImageType(m_ImageType);
-    getSOPCommon().setSOPClassUID(UID_SegmentationStorage);
+    typename DcmSegmentation<BitsAlloc>::IODImage().getGeneralImage().setLossyImageCompression("00");
+    typename DcmSegmentation<BitsAlloc>::IODImage().getGeneralImage().setImageType(m_ImageType);
+    typename DcmSegmentation<BitsAlloc>::IODImage().getSOPCommon().setSOPClassUID(UID_SegmentationStorage);
 
     // -- Extra Study level data --
 
@@ -380,7 +401,7 @@ OFCondition DcmSegmentation::writeWithSeparatePixelData(DcmItem& dataset, Uint8*
     // SOP Common Module
     // Common Instance Reference Module
     if (result.good())
-        result = DcmSegmentation::IODImage::write(dataset);
+        result = DcmSegmentation<BitsAlloc>::IODImage::write(dataset);
 
     // Write frame pixel data
     if (result.good())
@@ -414,37 +435,44 @@ OFCondition DcmSegmentation::writeWithSeparatePixelData(DcmItem& dataset, Uint8*
     return result;
 }
 
-FGInterface& DcmSegmentation::getFunctionalGroups()
+template <typename BitsAlloc>
+FGInterface& DcmSegmentation<BitsAlloc>::getFunctionalGroups()
 {
     return m_FGInterface;
 }
 
-IODMultiFrameFGModule::ConcatenationInfo& DcmSegmentation::getConcatenationInfo()
+template <typename BitsAlloc>
+IODMultiFrameFGModule::ConcatenationInfo& DcmSegmentation<BitsAlloc>::getConcatenationInfo()
 {
     return m_FG.getConcatenationInfo();
 }
 
-size_t DcmSegmentation::getNumberOfFrames()
+template <typename BitsAlloc>
+size_t DcmSegmentation<BitsAlloc>::getNumberOfFrames()
 {
     return m_FGInterface.getNumberOfFrames();
 }
 
-size_t DcmSegmentation::getNumberOfSegments()
+template <typename BitsAlloc>
+size_t DcmSegmentation<BitsAlloc>::getNumberOfSegments()
 {
     return m_Segments.size();
 }
 
-IODGeneralEquipmentModule& DcmSegmentation::getEquipment()
+template <typename BitsAlloc>
+IODGeneralEquipmentModule& DcmSegmentation<BitsAlloc>::getEquipment()
 {
-    return DcmSegmentation::IODImage::getEquipment();
+    return DcmSegmentation<BitsAlloc>::IODImage::getEquipment();
 }
 
-IODSegmentationSeriesModule& DcmSegmentation::getSegmentationSeriesModule()
+template <typename BitsAlloc>
+IODSegmentationSeriesModule& DcmSegmentation<BitsAlloc>::getSegmentationSeriesModule()
 {
     return m_SegmentationSeries;
 }
 
-OFCondition DcmSegmentation::addSegment(DcmSegment* seg, Uint16& segmentNumber)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::addSegment(DcmSegment<BitsAlloc>* seg, Uint16& segmentNumber)
 {
     segmentNumber = 0;
     if (seg == NULL)
@@ -461,7 +489,8 @@ OFCondition DcmSegmentation::addSegment(DcmSegment* seg, Uint16& segmentNumber)
     return EC_Normal;
 }
 
-OFCondition DcmSegmentation::addFrame(Uint8* pixData)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::addFrame(Uint8* pixData)
 {
     if (m_Frames.size() >= DCM_SEG_MAX_FRAMES)
         return SG_EC_MaxFramesReached;
@@ -480,13 +509,15 @@ OFCondition DcmSegmentation::addFrame(Uint8* pixData)
                 result = IOD_EC_CannotInsertFrame;
             }
         }
-        else // fractional
+        else // fractional or labelmap
         {
+            Uint16 bits_allocated = 1;
+            result = getImagePixel().getBitsAllocated(bits_allocated);
             frame = new DcmIODTypes::Frame();
             if (frame)
             {
                 frame->length  = rows * cols;
-                frame->pixData = new Uint8[frame->length];
+                frame->pixData = new Uint8[frame->length * (bits_allocated / 8)];
                 if (frame->pixData)
                 {
                     memcpy(frame->pixData, pixData, frame->length);
@@ -513,12 +544,14 @@ OFCondition DcmSegmentation::addFrame(Uint8* pixData)
     return result;
 }
 
-SOPInstanceReferenceMacro& DcmSegmentation::getReferencedPPS()
+template <typename BitsAlloc>
+SOPInstanceReferenceMacro& DcmSegmentation<BitsAlloc>::getReferencedPPS()
 {
-    return getSeries().getReferencedPPS();
+    return typename DcmSegmentation<BitsAlloc>::IODImage().getSeries().getReferencedPPS();
 }
 
-const DcmIODTypes::Frame* DcmSegmentation::getFrame(const size_t& frameNo)
+template <typename BitsAlloc>
+const DcmIODTypes::Frame* DcmSegmentation<BitsAlloc>::getFrame(const size_t& frameNo)
 {
     if (frameNo > m_Frames.size() - 1)
     {
@@ -528,7 +561,8 @@ const DcmIODTypes::Frame* DcmSegmentation::getFrame(const size_t& frameNo)
     return m_Frames[frameNo];
 }
 
-void DcmSegmentation::getFramesForSegment(const size_t& segmentNumber, OFVector<size_t>& frameNumbers)
+template <typename BitsAlloc>
+void DcmSegmentation<BitsAlloc>::getFramesForSegment(const size_t& segmentNumber, OFVector<size_t>& frameNumbers)
 {
     size_t numFrames = getNumberOfFrames();
     for (size_t count = 0; count < numFrames; count++)
@@ -551,13 +585,15 @@ void DcmSegmentation::getFramesForSegment(const size_t& segmentNumber, OFVector<
     }
 }
 
-OFCondition DcmSegmentation::addForAllFrames(const FGBase& group)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::addForAllFrames(const FGBase& group)
 {
     return m_FGInterface.addShared(group);
 }
 
+template <typename BitsAlloc>
 OFCondition
-DcmSegmentation::addFrame(Uint8* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation)
+DcmSegmentation<BitsAlloc>::addFrame(Uint8* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation)
 {
     if (m_Frames.size() >= DCM_SEG_MAX_FRAMES)
         return SG_EC_MaxFramesReached;
@@ -633,24 +669,27 @@ DcmSegmentation::addFrame(Uint8* pixData, const Uint16 segmentNumber, const OFVe
     return result;
 }
 
-ContentIdentificationMacro& DcmSegmentation::getContentIdentification()
+template <typename BitsAlloc>
+ContentIdentificationMacro& DcmSegmentation<BitsAlloc>::getContentIdentification()
 {
     return m_ContentIdentificationMacro;
 }
 
-IODMultiframeDimensionModule& DcmSegmentation::getDimensions()
+template <typename BitsAlloc>
+IODMultiframeDimensionModule& DcmSegmentation<BitsAlloc>::getDimensions()
 {
     return m_DimensionModule;
 }
 
+template <typename BitsAlloc>
 OFCondition
-DcmSegmentation::setLossyImageCompressionFlag(const OFString& ratios, const OFString& methods, const OFBool checkValues)
+DcmSegmentation<BitsAlloc>::setLossyImageCompressionFlag(const OFString& ratios, const OFString& methods, const OFBool checkValues)
 {
-    OFCondition result = getGeneralImage().setLossyImageCompression("01");
+    OFCondition result = typename DcmSegmentation<BitsAlloc>::IODImage().getGeneralImage().setLossyImageCompression("01");
     if (result.good() || !checkValues)
-        result = getGeneralImage().setLossyImageCompressionMethod(methods);
+        result = typename DcmSegmentation<BitsAlloc>::IODImage().getGeneralImage().setLossyImageCompressionMethod(methods);
     if (result.good() || !checkValues)
-        result = getGeneralImage().setLossyImageCompressionRatio(ratios);
+        result = typename DcmSegmentation<BitsAlloc>::IODImage().getGeneralImage().setLossyImageCompressionRatio(ratios);
 
     if (checkValues)
         return result;
@@ -658,7 +697,8 @@ DcmSegmentation::setLossyImageCompressionFlag(const OFString& ratios, const OFSt
         return EC_Normal;
 }
 
-OFCondition DcmSegmentation::saveFile(const OFString& filename, const E_TransferSyntax writeXfer)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::saveFile(const OFString& filename, const E_TransferSyntax writeXfer)
 {
     if ((writeXfer != EXS_LittleEndianExplicit) && (writeXfer != EXS_BigEndianExplicit)
         && (writeXfer != EXS_LittleEndianImplicit)
@@ -696,8 +736,8 @@ OFCondition DcmSegmentation::saveFile(const OFString& filename, const E_Transfer
 }
 
 /* -- Setter for DICOM attributes -- */
-
-OFCondition DcmSegmentation::setEquipmentInfo(const IODGeneralEquipmentModule::EquipmentInfo& equipmentInfo,
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::setEquipmentInfo(const IODGeneralEquipmentModule::EquipmentInfo& equipmentInfo,
                                               const OFBool checkValue)
 {
 
@@ -721,7 +761,8 @@ OFCondition DcmSegmentation::setEquipmentInfo(const IODGeneralEquipmentModule::E
     return result;
 }
 
-OFCondition DcmSegmentation::setContentIdentification(const ContentIdentificationMacro& contentIdentification,
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::setContentIdentification(const ContentIdentificationMacro& contentIdentification,
                                                       const OFBool checkValue)
 {
     // Instance Number and Content Label must be filled out, rest can be empty
@@ -740,7 +781,8 @@ OFCondition DcmSegmentation::setContentIdentification(const ContentIdentificatio
 
 /* -- Getter for DICOM attributes -- */
 
-DcmSegment* DcmSegmentation::getSegment(const size_t segmentNumber)
+template <typename BitsAlloc>
+DcmSegment<BitsAlloc>* DcmSegmentation<BitsAlloc>::getSegment(const size_t segmentNumber)
 {
     // check for invalid index
     if ((segmentNumber == 0) || (segmentNumber > m_Segments.size()))
@@ -752,7 +794,8 @@ DcmSegment* DcmSegmentation::getSegment(const size_t segmentNumber)
     return m_Segments[segmentNumber - 1];
 }
 
-OFBool DcmSegmentation::getSegmentNumber(const DcmSegment* segment, size_t& segmentNumber)
+template <typename BitsAlloc>
+OFBool DcmSegmentation<BitsAlloc>::getSegmentNumber(const DcmSegment<BitsAlloc>* segment, size_t& segmentNumber)
 {
     segmentNumber = 0;
     size_t max    = m_Segments.size();
@@ -768,7 +811,8 @@ OFBool DcmSegmentation::getSegmentNumber(const DcmSegment* segment, size_t& segm
     return OFFalse;
 }
 
-OFCondition DcmSegmentation::getModality(OFString& value, const long signed int pos) const
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::getModality(OFString& value, const long signed int pos) const
 {
     (void)pos;
     // Fixed for Segmentations to value "SEG"
@@ -776,7 +820,8 @@ OFCondition DcmSegmentation::getModality(OFString& value, const long signed int 
     return EC_Normal;
 }
 
-OFCondition DcmSegmentation::importFromSourceImage(const OFString& filename, const bool takeOverCharset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::importFromSourceImage(const OFString& filename, const bool takeOverCharset)
 {
     DcmFileFormat dcmff;
     OFCondition result = dcmff.loadFile(filename);
@@ -787,7 +832,8 @@ OFCondition DcmSegmentation::importFromSourceImage(const OFString& filename, con
     return result;
 }
 
-OFCondition DcmSegmentation::importFromSourceImage(DcmItem& dataset, const bool takeOverCharset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::importFromSourceImage(DcmItem& dataset, const bool takeOverCharset)
 {
     OFString FoR;
     dataset.findAndGetOFStringArray(DCM_FrameOfReferenceUID, FoR);
@@ -801,21 +847,24 @@ OFCondition DcmSegmentation::importFromSourceImage(DcmItem& dataset, const bool 
 
 /* protected functions */
 
-OFCondition DcmSegmentation::writeSegments(DcmItem& item)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::writeSegments(DcmItem& item)
 {
     OFCondition result;
-    DcmIODUtil::writeSubSequence<OFVector<DcmSegment*> >(
+    DcmIODUtil::writeSubSequence<OFVector<DcmSegment<BitsAlloc>*> >(
         result, DCM_SegmentSequence, m_Segments, item, "1-n", "1", "SegmentationImageModule");
     return result;
 }
 
-OFCondition DcmSegmentation::readSegments(DcmItem& item)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::readSegments(DcmItem& item)
 {
-    return DcmIODUtil::readSubSequence<OFVector<DcmSegment*> >(
+    return DcmIODUtil::readSubSequence<OFVector<DcmSegment<BitsAlloc>*> >(
         item, DCM_SegmentSequence, m_Segments, "1-n", "1", "SegmentationImageModule");
 }
 
-OFCondition DcmSegmentation::readFrames(DcmItem& dataset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::readFrames(DcmItem& dataset)
 {
     OFCondition result;
     Uint16 allocated, stored, high, spp, pixelRep, rows, cols;
@@ -878,7 +927,8 @@ OFCondition DcmSegmentation::readFrames(DcmItem& dataset)
     return result;
 }
 
-OFCondition DcmSegmentation::getAndCheckImagePixelAttributes(DcmItem& dataset,
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::getAndCheckImagePixelAttributes(DcmItem& dataset,
                                                              Uint16& allocated,
                                                              Uint16& stored,
                                                              Uint16& high,
@@ -990,7 +1040,8 @@ OFCondition DcmSegmentation::getAndCheckImagePixelAttributes(DcmItem& dataset,
     return EC_Normal;
 }
 
-OFCondition DcmSegmentation::writeDataset(DcmItem& dataset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::writeDataset(DcmItem& dataset)
 {
     Uint8* pixData = NULL;
     size_t pixDataLength;
@@ -1013,7 +1064,8 @@ OFCondition DcmSegmentation::writeDataset(DcmItem& dataset)
     return result;
 }
 
-OFCondition DcmSegmentation::writeConcatenation(ConcatenationCreator& cc)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::writeConcatenation(ConcatenationCreator& cc)
 {
     Uint8* pixData       = NULL;
     size_t pixDataLength = 0;
@@ -1028,7 +1080,8 @@ OFCondition DcmSegmentation::writeConcatenation(ConcatenationCreator& cc)
     return result;
 }
 
-OFCondition DcmSegmentation::writeMultiFrameFunctionalGroupsModule(DcmItem& dataset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::writeMultiFrameFunctionalGroupsModule(DcmItem& dataset)
 {
     Uint32 numFrames = DcmIODUtil::limitMaxFrames(
         m_Frames.size(), "More than 2147483647 frames provided, limiting Number of Frames to 2147483647");
@@ -1039,12 +1092,14 @@ OFCondition DcmSegmentation::writeMultiFrameFunctionalGroupsModule(DcmItem& data
     return result;
 }
 
-OFCondition DcmSegmentation::writeMultiFrameDimensionModule(DcmItem& dataset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::writeMultiFrameDimensionModule(DcmItem& dataset)
 {
     return m_DimensionModule.write(dataset);
 }
 
-OFCondition DcmSegmentation::writeFractionalFrames(Uint8* pixData)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::writeFractionalFrames(Uint8* pixData)
 {
     OFVector<DcmIODTypes::Frame*>::iterator it = m_Frames.begin();
     // Just copy bytes for each frame as is
@@ -1056,7 +1111,8 @@ OFCondition DcmSegmentation::writeFractionalFrames(Uint8* pixData)
     return EC_Normal;
 }
 
-OFCondition DcmSegmentation::writeBinaryFrames(Uint8* pixData, Uint16 rows, Uint16 cols, const size_t pixDataLength)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::writeBinaryFrames(Uint8* pixData, Uint16 rows, Uint16 cols, const size_t pixDataLength)
 {
     // Holds the pixels for all frames. Each bit represents a pixel which is either
     // 1 (part of segment) or 0 (not part of segment. All frames are directly
@@ -1068,7 +1124,8 @@ OFCondition DcmSegmentation::writeBinaryFrames(Uint8* pixData, Uint16 rows, Uint
     return EC_Normal;
 }
 
-OFCondition DcmSegmentation::writeSegmentationImageModule(DcmItem& dataset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::writeSegmentationImageModule(DcmItem& dataset)
 {
     dataset.putAndInsertOFStringArray(DCM_ImageType, "DERIVED\\PRIMARY");
 
@@ -1126,7 +1183,7 @@ OFCondition DcmSegmentation::writeSegmentationImageModule(DcmItem& dataset)
     OFVector<DcmItem*> segmentItems;
     if (result.good())
     {
-        OFVector<DcmSegment*>::iterator it = m_Segments.begin();
+        typename OFVector<DcmSegment<BitsAlloc>*>::iterator it = m_Segments.begin();
         dataset.findAndDeleteElement(DCM_SegmentSequence);
         for (Uint16 itemCount = 0; (it != m_Segments.end()) && result.good(); itemCount++)
         {
@@ -1155,9 +1212,10 @@ OFCondition DcmSegmentation::writeSegmentationImageModule(DcmItem& dataset)
 
 // -- private helpers --
 
-void DcmSegmentation::clearData()
+template <typename BitsAlloc>
+void DcmSegmentation<BitsAlloc>::clearData()
 {
-    DcmSegmentation::IODImage::clearData();
+    DcmSegmentation<BitsAlloc>::IODImage::clearData();
     m_FG.clearData();
     m_FGInterface.clear();
     DcmIODUtil::freeContainer(m_Frames);
@@ -1167,7 +1225,8 @@ void DcmSegmentation::clearData()
     m_SegmentationType           = DcmSegTypes::ST_UNKNOWN;
 }
 
-OFBool DcmSegmentation::checkPixDataLength(DcmElement* pixelData,
+template <typename BitsAlloc>
+OFBool DcmSegmentation<BitsAlloc>::checkPixDataLength(DcmElement* pixelData,
                                            const Uint16 rows,
                                            const Uint16 cols,
                                            const Uint32& numberOfFrames)
@@ -1203,7 +1262,8 @@ OFBool DcmSegmentation::checkPixDataLength(DcmElement* pixelData,
     return OFTrue;
 }
 
-OFCondition DcmSegmentation::getTotalBytesRequired(const Uint16& rows,
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::getTotalBytesRequired(const Uint16& rows,
                                                    const Uint16& cols,
                                                    const Uint32& numberOfFrames,
                                                    size_t& bytesRequired)
@@ -1234,7 +1294,8 @@ OFCondition DcmSegmentation::getTotalBytesRequired(const Uint16& rows,
     return EC_Normal;
 }
 
-OFCondition DcmSegmentation::loadFile(DcmFileFormat& dcmff, const OFString& filename, DcmDataset*& dset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::loadFile(DcmFileFormat& dcmff, const OFString& filename, DcmDataset*& dset)
 {
     dset               = NULL;
     OFCondition result = dcmff.loadFile(filename.c_str());
@@ -1252,7 +1313,8 @@ OFCondition DcmSegmentation::loadFile(DcmFileFormat& dcmff, const OFString& file
     return result;
 }
 
-OFCondition DcmSegmentation::readSegmentationFractionalType(DcmItem& item)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::readSegmentationFractionalType(DcmItem& item)
 {
     m_SegmentationFractionalType = DcmSegTypes::SFT_UNKNOWN;
     if (!item.tagExists(DCM_SegmentationFractionalType))
@@ -1261,7 +1323,7 @@ OFCondition DcmSegmentation::readSegmentationFractionalType(DcmItem& item)
     }
     DcmCodeString element(DCM_SegmentationFractionalType);
     OFCondition result = DcmIODUtil::getAndCheckElementFromDataset(
-        item, element, getRules()->getByTag(DCM_SegmentationFractionalType));
+        item, element, typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->getByTag(DCM_SegmentationFractionalType));
     OFString str;
     if (result.good())
     {
@@ -1278,7 +1340,8 @@ OFCondition DcmSegmentation::readSegmentationFractionalType(DcmItem& item)
         return EC_Normal;
 }
 
-OFCondition DcmSegmentation::readSegmentationType(DcmItem& item)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::readSegmentationType(DcmItem& item)
 {
     m_SegmentationType = DcmSegTypes::ST_UNKNOWN;
     if (!item.tagExists(DCM_SegmentationType))
@@ -1288,7 +1351,7 @@ OFCondition DcmSegmentation::readSegmentationType(DcmItem& item)
 
     DcmCodeString element(DCM_SegmentationType);
     OFCondition result
-        = DcmIODUtil::getAndCheckElementFromDataset(item, element, getRules()->getByTag(DCM_SegmentationType));
+        = DcmIODUtil::getAndCheckElementFromDataset(item, element, typename DcmSegmentation<BitsAlloc>::IODImage().getRules()->getByTag(DCM_SegmentationType));
     OFString str;
     if (result.good())
     {
@@ -1306,12 +1369,15 @@ OFCondition DcmSegmentation::readSegmentationType(DcmItem& item)
 }
 
 // protected override of public base class function
-IODImagePixelModule<Uint8>& DcmSegmentation::getImagePixel()
+
+template <typename BitsAlloc>
+IODImagePixelModule<Uint8>& DcmSegmentation<BitsAlloc>::getImagePixel()
 {
-    return *OFget<IODImagePixelModule<Uint8> >(&DcmSegmentation::IODImage::getImagePixel());
+    return *OFget<IODImagePixelModule<Uint8> >(&DcmSegmentation<BitsAlloc>::IODImage::getImagePixel());
 }
 
-OFBool DcmSegmentation::check(const OFBool checkFGStructure)
+template <typename BitsAlloc>
+OFBool DcmSegmentation<BitsAlloc>::check(const OFBool checkFGStructure)
 {
     if (m_Frames.size() == 0)
     {
@@ -1356,7 +1422,7 @@ OFBool DcmSegmentation::check(const OFBool checkFGStructure)
         frameOfRefRequired = OFFalse;
     }
     OFString frameOfRef;
-    getFrameOfReference().getFrameOfReferenceUID(frameOfRef);
+    typename DcmSegmentation<BitsAlloc>::IODImage().getFrameOfReference().getFrameOfReferenceUID(frameOfRef);
     if (frameOfRefRequired && frameOfRef.empty())
     {
         DCMSEG_ERROR("Frame of Reference UID is not set for Segmentation but is required");
@@ -1400,7 +1466,8 @@ OFBool DcmSegmentation::check(const OFBool checkFGStructure)
     return OFTrue;
 }
 
-OFCondition DcmSegmentation::decompress(DcmDataset& dset)
+template <typename BitsAlloc>
+OFCondition DcmSegmentation<BitsAlloc>::decompress(DcmDataset& dset)
 {
     DcmXfer xfer = dset.getOriginalXfer();
     OFCondition result;
@@ -1432,7 +1499,8 @@ OFCondition DcmSegmentation::decompress(DcmDataset& dset)
     return result;
 }
 
-void DcmSegmentation::concatFrames(OFVector<DcmIODTypes::Frame*> frames, Uint8* pixData, const size_t bitsPerFrame)
+template <typename BitsAlloc>
+void DcmSegmentation<BitsAlloc>::concatFrames(OFVector<DcmIODTypes::Frame*> frames, Uint8* pixData, const size_t bitsPerFrame)
 {
     // Writing position within the pixData memory
     Uint8* writePos                               = pixData;

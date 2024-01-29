@@ -99,7 +99,10 @@ public:
         ST_BINARY,
         /// Fractional segmentation where fraction specifies how much of voxel
         /// is occupied by the segment
-        ST_FRACTIONAL
+        ST_FRACTIONAL,
+        /// Labelmap segmentation where each segment is assigned a unique
+        // integer value in the pixel data (EXPERIMENTAL: based on Supplement 243 public comment 2014-01-08)
+        ST_LABELMAP
     };
 
     /** Segment Algorithm Type
