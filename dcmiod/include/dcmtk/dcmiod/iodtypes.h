@@ -73,6 +73,8 @@ public:
         virtual size_t getLength() = 0;
         virtual void* getPixelData() = 0;
         virtual Uint8 bytesPerPixel() = 0;
+        virtual Uint8 getUint8AtIndex(size_t index) = 0;
+        virtual Uint16 getUint16AtIndex(size_t index) = 0;
         virtual void setReleaseMemory(OFBool release) = 0;
         virtual OFString print() = 0;
         virtual ~FrameBase() {}
@@ -140,6 +142,16 @@ public:
         virtual Uint8 bytesPerPixel()
         {
             return sizeof(PixelType);
+        }
+
+        virtual Uint8 getUint8AtIndex(size_t index)
+        {
+            return pixData[index];
+        }
+
+        virtual Uint16 getUint16AtIndex(size_t index)
+        {
+            return pixData[index];
         }
 
         virtual OFString print()
