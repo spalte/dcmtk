@@ -47,6 +47,7 @@ class DcmDataset;
  *  and a vector containing all frames of the merged instance.</li>
  * </ul>
  */
+
 class DCMTK_DCMFG_EXPORT ConcatenationLoader
 {
 
@@ -238,7 +239,7 @@ public:
      *  @return EC_Normal if loading Concatenation worked, error otherwise.
      */
     virtual OFCondition
-    load(const OFString& concatenationUID, DcmDataset* dataset, OFVector<DcmIODTypes::Frame*>& frames);
+    load(const OFString& concatenationUID, DcmDataset* dataset, OFVector<DcmIODTypes::FrameBase*>& frames);
 
 protected:
     /** Handles single file of a Concatenation and extracts structure for later
@@ -363,7 +364,7 @@ private:
     /// produced by the load() method. Once a merged instance is provided to
     /// the caller, as a result of load(), the caller is responsible for
     /// deleting the related memory.
-    OFVector<DcmIODTypes::Frame*> m_Frames;
+    OFVector<DcmIODTypes::FrameBase*> m_Frames;
 };
 
 #endif // CONCATENATIONLOADER_H

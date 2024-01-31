@@ -44,11 +44,12 @@
 class FGSegmentation;
 class FGDerivationImage;
 
+
 /** Class representing an object of the "Segmentation SOP Class".
  */
 
 template <typename BitsAlloc>
-class DCMTK_DCMSEG_EXPORT DcmSegmentation : public DcmIODImage<IODImagePixelModule<BitsAlloc> >
+class DCMTK_DCMSEG_EXPORT DcmSegmentation : public DcmIODImage<IODImagePixelModule<BitsAlloc>>
 {
 
 public:
@@ -170,6 +171,31 @@ public:
                                                 const Uint16 columns,
                                                 const IODGeneralEquipmentModule::EquipmentInfo& equipmentInfo,
                                                 const ContentIdentificationMacro& contentIdentification);
+
+    /** Factory method to create a labelmap segmentation object from the minimal
+     *  set of information required. The actual segments and the frame data is
+     *  added separately.
+     *  The memory of the resulting Segmentation object has to be freed by the
+     *  caller.
+     *  @param  segmentation The resulting segmentation object if provided data is
+     *          valid. Otherwise NULL is returned.
+     *  @param  rows Number of rows of segmentation frame data
+     *  @param  columns Number of rows of segmentation frame data
+     *  @param  equipmentInfo Equipment that is responsible for creating the
+     *          segmentation. All attributes in equipmentInfo must have
+     *          non-empty values.
+     *  @param  contentIdentification Basic content identification information
+     *  @param  maximumNumberOfSegments Maximum number of segments that can be added.
+     *          This is used to decide whether the underlying pixel data will use
+     *          8 bit allocated (if maximumNumberOfSegments <= 255) or 16 bit.
+     *  @return EC_Normal if creation was successful, error otherwise
+     */
+    static OFCondition createLabelmapSegmentation(DcmSegmentation*& segmentation,
+                                                  const Uint16 rows,
+                                                  const Uint16 columns,
+                                                  const IODGeneralEquipmentModule::EquipmentInfo& equipmentInfo,
+                                                  const ContentIdentificationMacro& contentIdentification,
+                                                  const Uint16 maximumNumberOfSegments);
 
     /** Factory method to create a fractional segmentation object from the minimal
      *  set of information required. The actual segments and the frame data is
@@ -309,7 +335,7 @@ public:
      *  @param  frameNo The number of the frame to get (starting with 0)
      *  @return The frame requested or NULL if not existing
      */
-    virtual const DcmIODTypes::Frame* getFrame(const size_t& frameNo);
+    virtual const DcmIODTypes::Frame<BitsAlloc>* getFrame(const size_t& frameNo);
 
     /** Get the frame numbers that belong to a specific segment number
      *  @param  segmentNumber The segment to search frames for
@@ -348,7 +374,7 @@ public:
      *  @return EC_Normal if adding was successful, error otherwise
      */
     virtual OFCondition
-    addFrame(Uint8* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation);
+    addFrame(BitsAlloc* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation);
 
     /** Return reference to content content identification of this segmentation object
      *  @return Reference to content identification data
@@ -454,7 +480,7 @@ protected:
      *  @param  pixDataLength Length of pixData buffer
      *  @return EC_Normal if writing succeeded, error otherwise
      */
-    OFCondition writeWithSeparatePixelData(DcmItem& dataset, Uint8*& pixData, size_t& pixDataLength);
+    OFCondition writeWithSeparatePixelData(DcmItem& dataset, BitsAlloc*& pixData, size_t& pixDataLength);
 
     /** Create those data structures common for binary and fractional
      *  segmentations
@@ -475,7 +501,7 @@ protected:
      *  the image pixel module manually.
      *  @return The Image Pixel Module
      */
-    virtual IODImagePixelModule<Uint8>& getImagePixel();
+    virtual IODImagePixelModule<BitsAlloc>& getImagePixel();
 
     /** Initialize IOD rules
      */
@@ -491,7 +517,7 @@ protected:
      *  @param  pixData The filled pixel data buffer returned by the method
      *  @return EC_Normal if writing was successful, error otherwise
      */
-    OFCondition writeFractionalFrames(Uint8* pixData);
+    OFCondition writeByteBasedFrames(BitsAlloc* pixData);
 
     /** Write binary frames to given given pixel data buffer
      *  @param  pixData The filled pixel data buffer returned by the method
@@ -500,7 +526,7 @@ protected:
      *  @param  pixDataLength The length of buffer in pixData (in bytes) returned by this method.
      *  @return EC_Normal if writing was successful, error otherwise
      */
-    virtual OFCondition writeBinaryFrames(Uint8* pixData, Uint16 rows, Uint16 cols, const size_t pixDataLength);
+    virtual OFCondition writeBinaryFrames(BitsAlloc* pixData, Uint16 rows, Uint16 cols, const size_t pixDataLength);
 
     /** Write Segmentation Image Module
      *  @param dataset The item to write to, usually main dataset level
@@ -531,6 +557,8 @@ protected:
      *  @return EC_Normal if reading was successful, error otherwise
      */
     virtual OFCondition readFrames(DcmItem& dataset);
+
+    virtual OFCondition readPixelData(DcmElement* pixelData, const size_t numFrames, const size_t pixelsPerFrame);
 
     /** Get Image Pixel module attributes and perform some basic checking
      *  @param  dataset Item to read from, usually main dataset level
@@ -566,17 +594,20 @@ protected:
      *  @param pixData The pixel data element data to be filled. Size must be
      *         at least bitsPerFrame * number of frames.
      *  @param bitsPerFrame Bits required per frame, usually rows * columns
+     *  @return EC_Normal if concatenation was successful, error otherwise
      */
-    virtual void concatFrames(OFVector<DcmIODTypes::Frame*> frames, Uint8* pixData, const size_t bitsPerFrame);
+    virtual OFCondition concatFrames(OFVector<DcmIODTypes::FrameBase*> frames, BitsAlloc* pixData, const size_t bitsPerFrame);
 
     /** Add frame to segmentation object.
      *  @param  pixData Pixel data to be added. Length must be rows*columns bytes.
      *          Pixel data is copied so it must be freed by the caller.
      *  @return EC_Normal if adding was successful, error otherwise
      */
-    virtual OFCondition addFrame(Uint8* pixData);
+    virtual OFCondition addFrame(BitsAlloc* pixData);
 
 private:
+
+    BitsAlloc m_BitsAllocType;
     // Modules supported:
     //
     // Patient Module (through DcmIODImage)
@@ -608,7 +639,7 @@ private:
     IODMultiframeDimensionModule m_DimensionModule;
 
     /// Binary frame data
-    OFVector<DcmIODTypes::Frame*> m_Frames;
+    OFVector<DcmIODTypes::FrameBase*> m_Frames;
 
     /* Image level information */
 
@@ -630,7 +661,7 @@ private:
     DcmUnsignedShort m_MaximumFractionalValue;
 
     /// Segment descriptions from Segment Sequence
-    OFVector<DcmSegment<BitsAlloc> *> m_Segments;
+    OFVector<DcmSegment<BitsAlloc>*> m_Segments;
 
     /// Multi-frame Functional Groups high level interface
     FGInterface m_FGInterface;

@@ -26,6 +26,7 @@
 #include "dcmtk/dcmiod/ioddef.h"
 #include "dcmtk/oflog/oflog.h"
 #include "dcmtk/ofstd/ofcond.h"
+#include <cstddef>
 
 // ----------------------------------------------------------------------------
 // Define the loggers for this module
@@ -64,19 +65,109 @@ class DCMTK_DCMIOD_EXPORT DcmIODTypes
 {
 
 public:
+
+    struct FrameBase
+    {
+        /// Destructor
+        FrameBase() {}
+        virtual size_t getLength() = 0;
+        virtual void* getPixelData() = 0;
+        virtual Uint8 bytesPerPixel() = 0;
+        virtual void setReleaseMemory(OFBool release) = 0;
+        virtual OFString print() = 0;
+        virtual ~FrameBase() {}
+    };
+
     /** Struct representing a single frame
      */
-    struct Frame
+    template<typename PixelType>
+    struct Frame : public FrameBase
     {
+        Frame() : pixData(NULL), length(0), releaseMemory(OFTrue) {}
+
+        Frame(const size_t lengthInBytes) : pixData(NULL), length(lengthInBytes), releaseMemory(OFTrue)
+        {
+            pixData = new PixelType[lengthInBytes];
+        }
+
+        Frame(PixelType* pixelData, const size_t lengthInBytes) : pixData(pixelData), length(lengthInBytes), releaseMemory(OFTrue)
+        {
+        }
+
+        Frame(const Frame& rhs)
+        {
+            delete[] pixData;
+            pixData = new PixelType[rhs.length];
+            memcpy(pixData, rhs.pixData, rhs.length);
+            length = rhs.length;
+            releaseMemory = rhs.releaseMemory;
+        };
+
+        /// Assignment operator
+        Frame& operator=(const Frame& rhs)
+        {
+            if (this != &rhs)
+            {
+                delete[] pixData;
+                pixData = new PixelType[rhs.length];
+                memcpy(pixData, rhs.pixData, rhs.length);
+                length = rhs.length;
+                releaseMemory = rhs.releaseMemory;
+            }
+            return *this;
+        }
+
+        virtual void setReleaseMemory(OFBool release)
+        {
+            releaseMemory = release;
+        }
+
+        virtual size_t getLength()
+        {
+            return length;
+        }
+
+        virtual void* getPixelData()
+        {
+            return pixData;
+        }
+
+        virtual PixelType* getPixelDataTyped()
+        {
+            return pixData;
+        }
+
+        virtual Uint8 bytesPerPixel()
+        {
+            return sizeof(PixelType);
+        }
+
+        virtual OFString print()
+        {
+            OFStringStream ss;
+            ss << "Frame with " << length + " bytes:\n";
+            for (size_t i = 0; i < length; i++)
+            {
+                ss << STD_NAMESPACE hex << (Uint16)pixData[i] + " ";
+            }
+            ss << "\n";
+            return ss.str();
+        }
+
         /// Array for the pixel data bytes
-        Uint8* pixData;
-        /// Number of pixel data bytes (i.e.\ Bits Allocated)
+        PixelType* pixData;
+        /// Number of pixel data in bytes
         size_t length;
+        // Denote whether to release memory in destructor
+        OFBool releaseMemory;
         /// Destructor, frees memory
         ~Frame()
         {
-            delete[] pixData;
-            pixData = NULL;
+            if (releaseMemory)
+            {
+                delete[] pixData;
+                pixData = NULL;
+            }
         }
     };
 

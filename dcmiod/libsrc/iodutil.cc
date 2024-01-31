@@ -687,7 +687,7 @@ Uint32 DcmIODUtil::limitMaxFrames(const size_t numFramesPresent, const OFString&
 OFCondition DcmIODUtil::extractBinaryFrames(Uint8* pixData,
                                             const size_t numFrames,
                                             const size_t bitsPerFrame,
-                                            OFVector<DcmIODTypes::Frame*>& results)
+                                            OFVector<DcmIODTypes::FrameBase*>& results)
 {
     // Will hold the bit position (0-7) that the current frame starts from. The
     // first frame will always start at bit 0.
@@ -707,7 +707,7 @@ OFCondition DcmIODUtil::extractBinaryFrames(Uint8* pixData,
     for (size_t f = 0; f < numFrames; f++)
     {
         // Create frame with correct length and copy 1:1 from pixel data
-        DcmIODTypes::Frame* frame = new DcmIODTypes::Frame();
+        DcmIODTypes::Frame<Uint8>* frame = new DcmIODTypes::Frame<Uint8>();
         frame->length             = frameLengthBytes;
         frame->pixData            = new Uint8[frameLengthBytes];
         if (!frame->pixData)

@@ -978,7 +978,7 @@ public:
     static OFCondition extractBinaryFrames(Uint8* pixData,
                                            const size_t numFrames,
                                            const size_t bitsPerFrame,
-                                           OFVector<DcmIODTypes::Frame*>& results);
+                                           OFVector<DcmIODTypes::FrameBase*>& results);
 
     /** Aligns 1 bit per pixel frame data starting at a given bit position in the
      *  provided buffer with the start of that buffer. This is used to create

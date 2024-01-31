@@ -25,7 +25,7 @@
 #include "dcmtk/dcmseg/segdef.h"
 #include "dcmtk/dcmseg/segutils.h"
 
-DcmIODTypes::Frame* DcmSegUtils::packBinaryFrame(const Uint8* pixelData, const Uint16 rows, const Uint16 columns)
+DcmIODTypes::Frame<Uint8>* DcmSegUtils::packBinaryFrame(const Uint8* pixelData, const Uint16 rows, const Uint16 columns)
 {
     // Sanity checking
     const size_t numPixels = OFstatic_cast(size_t, rows) * columns;
@@ -39,7 +39,7 @@ DcmIODTypes::Frame* DcmSegUtils::packBinaryFrame(const Uint8* pixelData, const U
         DCMSEG_ERROR("Unable to pack binary segmentation frame: No pixel data provided");
         return NULL;
     }
-    DcmIODTypes::Frame* frame = new DcmIODTypes::Frame();
+    DcmIODTypes::Frame<Uint8>* frame = new DcmIODTypes::Frame<Uint8>();
     if (frame == NULL)
     {
         DCMSEG_ERROR("Could not pack binary segmentation frame: Memory exhausted");
@@ -65,7 +65,7 @@ DcmIODTypes::Frame* DcmSegUtils::packBinaryFrame(const Uint8* pixelData, const U
     return frame;
 }
 
-DcmIODTypes::Frame* DcmSegUtils::unpackBinaryFrame(const DcmIODTypes::Frame* frame, Uint16 rows, Uint16 cols)
+DcmIODTypes::Frame<Uint8>* DcmSegUtils::unpackBinaryFrame(const DcmIODTypes::Frame<Uint8>* frame, Uint16 rows, Uint16 cols)
 {
     // Sanity checking
     if ((frame == NULL) || (rows == 0) || (cols == 0))
@@ -76,7 +76,7 @@ DcmIODTypes::Frame* DcmSegUtils::unpackBinaryFrame(const DcmIODTypes::Frame* fra
 
     // Create result frame in memory
     size_t numBits             = OFstatic_cast(size_t, rows) * cols;
-    DcmIODTypes::Frame* result = new DcmIODTypes::Frame();
+    DcmIODTypes::Frame<Uint8>* result = new DcmIODTypes::Frame<Uint8>();
     if (result)
     {
         result->pixData = new Uint8[numBits];

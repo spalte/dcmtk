@@ -152,7 +152,9 @@ static void setGenericValues(DcmSegmentation_U8* seg)
     OFCHECK(seg->getSOPCommon().setSOPInstanceUID("1.2.276.0.7230010.3.1.4.8323329.14863.1565940357.864813").good());
     OFCHECK(seg->getGeneralImage().setContentDate("20190927").good());
     OFCHECK(seg->getGeneralImage().setContentTime("153857").good());
+    OFCHECK(seg->getGeneralImage().setContentTime("153857").good());
 }
+
 
 static void addSharedFGs(DcmSegmentation_U8* seg)
 {
@@ -356,7 +358,7 @@ static void checkConcatenationInstance(size_t numInstance, DcmSegmentation_U8* s
     OFCHECK(fg != NULL);
     OFCHECK(perFrame == OFFalse);
 
-    const DcmIODTypes::Frame* frame = concat->getFrame(0);
+    const DcmIODTypes::Frame<Uint8>* frame = concat->getFrame(0);
     OFCHECK(frame != OFnullptr);
     OFCHECK(frame->pixData != OFnullptr);
     OFCHECK(OFstatic_cast(Uint8, frame->length) == NUM_PIXELS_PER_FRAME);

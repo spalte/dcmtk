@@ -299,7 +299,7 @@ private:
   ContentIdentificationMacro m_ContentIdentification;
 
   /// Binary frame data
-  OFVector<DcmIODTypes::Frame*> m_Frames;
+  OFVector<DcmIODTypes::FrameBase*> m_Frames;
 
 };
 

@@ -546,8 +546,6 @@ OFCondition FGInterface::insertPerFrame(const Uint32 frameNo, FGBase* group, con
     {
         if (replaceExisting)
         {
-            DCMFG_DEBUG("Replacing per-frame FG for frame: " << frameNo << ", type: "
-                                                             << DcmFGTypes::FGType2OFString(group->getType()));
             deletePerFrame(frameNo, group->getType());
         }
         else

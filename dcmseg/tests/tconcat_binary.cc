@@ -95,7 +95,7 @@ OFTEST(dcmseg_concat_binary)
         {
             if (cl.getInfo().size() == 1)
             {
-                OFVector<DcmIODTypes::Frame*> frames;
+                OFVector<DcmIODTypes::Frame<Uint8>*> frames;
                 DcmFileFormat dcmff;
                 result = DcmSegmentation<Uint8>::loadConcatenation(cl, cl.getInfo().begin()->first, seg);
                 if (result.good())

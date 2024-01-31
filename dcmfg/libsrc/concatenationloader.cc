@@ -223,7 +223,7 @@ const ConcatenationLoader::TScanFailures& ConcatenationLoader::getFailedFiles()
 }
 
 OFCondition
-ConcatenationLoader::load(const OFString& concatenationUID, DcmDataset* dataset, OFVector<DcmIODTypes::Frame*>& frames)
+ConcatenationLoader::load(const OFString& concatenationUID, DcmDataset* dataset, OFVector<DcmIODTypes::FrameBase*>& frames)
 {
     if (dataset == NULL)
         return EC_IllegalParameter;
@@ -344,15 +344,26 @@ OFCondition ConcatenationLoader::extractFrames(DcmItem& item, Info& info, const 
             const Uint8* ptr = pixData;
             for (Uint32 f = 0; f < numFrames; f++)
             {
-                DcmIODTypes::Frame* frame = new DcmIODTypes::Frame();
+                DcmIODTypes::FrameBase* frame = NULL;
+                if (info.m_BitsAlloc <= 8) // 8 or 1
+                {
+                    frame = new DcmIODTypes::Frame<Uint8>(bytesPerFrame);
+                }
+                else if (info.m_BitsAlloc == 16)
+                {
+                    frame = new DcmIODTypes::Frame<Uint16>(bytesPerFrame);
+                }
+                else
+                {
+                    DCMFG_ERROR("Bits Allocated=" << info.m_BitsAlloc << " not supported, must be 8 or 16");
+                    return FG_EC_UnsupportedPixelDataLayout;
+                }
                 if (frame)
                 {
-                    frame->length  = bytesPerFrame;
-                    frame->pixData = new Uint8[frame->length];
-                    if (frame->pixData)
+                    if (frame->getPixelData())
                     {
-                        memcpy(frame->pixData, ptr, frame->length);
-                        ptr += frame->length;
+                        memcpy(frame->getPixelData(), ptr, frame->getLength());
+                        ptr += frame->getLength();
                         m_Frames.push_back(frame);
                     }
                     else

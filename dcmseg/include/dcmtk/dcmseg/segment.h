@@ -33,10 +33,10 @@
  *  Description Macro.
  */
 
-template<class>
+template <class>
 class DcmSegmentation;
 
-template<typename BitsAlloc>
+template <typename BitsAlloc>
 class DCMTK_DCMSEG_EXPORT DcmSegment
 {
 

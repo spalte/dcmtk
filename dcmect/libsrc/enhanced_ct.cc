@@ -100,7 +100,7 @@ struct EctEnhancedCT::WriteVisitor
         m_CT.getRows(rows);
         m_CT.getColumns(cols);
         const size_t numFrames      = m_CT.m_Frames.size();
-        const size_t numBytesFrame  = m_CT.m_Frames[0]->length;
+        const size_t numBytesFrame  = m_CT.m_Frames[0]->getLength();
         const size_t numPixelsFrame = rows * cols;
         // Creates the correct pixel data element, based on the image pixel module used.
         DcmPixelData* pixData = new DcmPixelData(DCM_PixelData);
@@ -118,7 +118,7 @@ struct EctEnhancedCT::WriteVisitor
                 {
                     for (size_t f = 0; f < numFrames; ++f)
                     {
-                        memcpy(ptr, m_CT.m_Frames[f]->pixData, numBytesFrame);
+                        memcpy(ptr, m_CT.m_Frames[f]->getPixelData(), numBytesFrame);
                         ptr += numPixelsFrame;
                     }
                     return m_Item.insert(pixData);
@@ -171,7 +171,7 @@ struct EctEnhancedCT::WriteVisitorConcatenation
         m_CT.getRows(rows);
         m_CT.getColumns(cols);
         const size_t numFrames     = m_CT.m_Frames.size();
-        const size_t numBytesFrame = m_CT.m_Frames[0]->length;
+        const size_t numBytesFrame = m_CT.m_Frames[0]->getLength();
         // Creates the correct pixel data element, based on the image pixel module used.
         m_pixDataLength = numBytesFrame * numFrames;
         m_pixData       = new Uint8[m_pixDataLength];
@@ -183,7 +183,7 @@ struct EctEnhancedCT::WriteVisitorConcatenation
             {
                 for (size_t f = 0; f < numFrames; ++f)
                 {
-                    memcpy(ptr, m_CT.m_Frames[f]->pixData, numBytesFrame);
+                    memcpy(ptr, m_CT.m_Frames[f]->getPixelData(), numBytesFrame);
                     ptr += numBytesFrame;
                 }
                 return EC_Normal;
@@ -261,11 +261,11 @@ struct EctEnhancedCT::ReadVisitor
             {
                 for (Uint32 n = 0; n < numFrames; n++)
                 {
-                    DcmIODTypes::Frame* f = new DcmIODTypes::Frame;
+                    DcmIODTypes::Frame<Uint16>* f = new DcmIODTypes::Frame<Uint16>();
                     if (f)
                     {
                         f->length  = numBytesFrame;
-                        f->pixData = new Uint8[f->length];
+                        f->pixData = new Uint16[f->length / 2];
                         memcpy(f->pixData, pixData + n * numBytesFrame / 2, numBytesFrame);
                         m_CT.m_Frames.push_back(f);
                     }
@@ -313,11 +313,11 @@ OFCondition EctEnhancedCT::Frames<PixelType>::addFrame(PixelType* data,
     {
         if (!perFrameInformation.empty())
         {
-            OFunique_ptr<DcmIODTypes::Frame> f(new DcmIODTypes::Frame);
+            OFunique_ptr<DcmIODTypes::Frame<Uint16>> f(new DcmIODTypes::Frame<Uint16>());
             if (f)
             {
                 f->length  = numPixels * sizeof(PixelType);
-                f->pixData = new Uint8[f->length];
+                f->pixData = new Uint16[f->length / 2];
                 memcpy(f->pixData, data, f->length);
                 m_CT.m_Frames.push_back(f.release());
                 OFVector<FGBase*>::const_iterator fg = perFrameInformation.begin();
@@ -346,7 +346,8 @@ PixelType* EctEnhancedCT::Frames<PixelType>::getFrame(const size_t frameNumber)
 {
     if (frameNumber < m_CT.m_Frames.size())
     {
-        return (PixelType*)(m_CT.m_Frames[frameNumber]->pixData);
+        DcmIODTypes::Frame<PixelType>* f = OFstatic_cast(DcmIODTypes::Frame<PixelType>*, m_CT.m_Frames[frameNumber]);
+        return f->getPixelDataTyped();
     }
     return NULL;
 }
@@ -499,7 +500,7 @@ EctEnhancedCT::loadConcatenation(ConcatenationLoader& cl, const OFString& concat
 
     DcmDataset dset;
     ct = NULL;
-    OFVector<DcmIODTypes::Frame*> frames;
+    OFVector<DcmIODTypes::FrameBase*> frames;
     OFCondition result = cl.load(concatenationUID, &dset, frames);
     if (result.good())
     {

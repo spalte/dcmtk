@@ -40,7 +40,7 @@ public:
      *   @param  columns The number of columns in the pixel data
      *   @return The frame data if successful, NULL if an error occurs
      */
-    static DcmIODTypes::Frame* packBinaryFrame(const Uint8* pixelData, const Uint16 rows, const Uint16 columns);
+    static DcmIODTypes::Frame<Uint8>* packBinaryFrame(const Uint8* pixelData, const Uint16 rows, const Uint16 columns);
 
     /** Compute the number of bytes required for a binary pixel data frame,
      *  given the number of pixels
@@ -58,7 +58,7 @@ public:
      *  @param  cols The cols of the frame
      *  @return The segmentation frame in unpacked format. NULL in case of error.
      */
-    static DcmIODTypes::Frame* unpackBinaryFrame(const DcmIODTypes::Frame* frame, Uint16 rows, Uint16 cols);
+    static DcmIODTypes::Frame<Uint8>* unpackBinaryFrame(const DcmIODTypes::Frame<Uint8>* frame, Uint16 rows, Uint16 cols);
 
     /** Aligns 1 bit per pixel frame data to make the frame start at a
      *  specific bit position within the first byte. This is used in the context

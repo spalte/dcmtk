@@ -734,7 +734,7 @@ private:
     IODCommonInstanceReferenceModule m_CommonInstanceReferenceModule;
 
     /// Binary frame data
-    OFVector<DcmIODTypes::Frame*> m_Frames;
+    OFVector<DcmIODTypes::FrameBase*> m_Frames;
 
     /// Multi-frame Functional Groups high level interface
     FGInterface m_FGInterface;

@@ -25,6 +25,7 @@
 #include "dcmtk/config/osconfig.h"
 
 #include "dcmtk/dcmdata/dctk.h"
+#include "dcmtk/dcmiod/iodtypes.h"
 #include "dcmtk/dcmfg/fgdefine.h"
 
 /** Class for creating Concatenations from existing SOP Instances.
@@ -84,6 +85,19 @@ public:
      */
     virtual OFCondition
     setCfgInput(DcmItem* srcDataset, Uint8* pixelData, size_t pixelDataLength, OFBool transferOwnership);
+
+    /** Set input dataset with separate pixel data that should be split
+     *  into a number of concatenation instances.
+     *  @param  srcDataset The dataset to read from (must not be NULL and not contain
+     *          the Pixel Data attribute (on main level)
+     *  @param  pixelData Raw buffer of source pixel data
+     *  @param  pixelDataLength Length of pixelData buffer in bytes
+     *  @param  transferOwnership If OFTrue, the ConcatenationCreator class will
+     *          free memory of the srcDataset and pixelData after processing.
+     *  @return EC_Normal if input is considered valid (up to now), error otherwise
+     */
+    virtual OFCondition
+    setCfgInput(DcmItem* srcDataset, Uint16* pixelData, size_t pixelDataLength, OFBool transferOwnership);
 
     /** Set number of frames that should go into a single concatenation instance produced.
      *  The last concatenation instance might have less frames. This setting also
@@ -176,6 +190,8 @@ protected:
      */
     virtual OFCondition configureCommon();
 
+    virtual OFCondition initSrcPixelData(DcmItem* srcDataset, OFBool transferOwnership);
+
 private:
 
     /// Maximum number of instances that make up a Concatenation (=2^16-1=65535),
@@ -216,7 +232,7 @@ private:
     /// before the call to this class returns).
     /// Once the ConcatenationCreator creator class goes out of scope or reset() is being called,
     /// it is set to NULL. If m_cfgTransferOwnership is OFTrue, memory is freed by this class, too.
-    Uint8* m_srcPixelData;
+    DcmIODTypes::FrameBase* m_srcPixelData;
 
     /// VR of pixel data extracted/derived from source dataset. EVR_OB and EVR_OW are supported.
     /// Initially set to EVR_Unknown.
