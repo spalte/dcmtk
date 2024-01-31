@@ -146,12 +146,12 @@ public:
 
         virtual Uint8 getUint8AtIndex(size_t index)
         {
-            return pixData[index];
+            return static_cast<Uint8>(pixData[index]);
         }
 
         virtual Uint16 getUint16AtIndex(size_t index)
         {
-            return pixData[index];
+            return static_cast<Uint16>(pixData[index]);
         }
 
         virtual OFString print()
