@@ -175,7 +175,6 @@ OFCondition ConcatenationCreator::writeNextInstance(DcmItem& dstDataset)
 
     // Allocate element/buffer for destination pixel data and other heap memory
     OFunique_ptr<DcmPixelData> dstPixelData(new DcmPixelData(DCM_PixelData));
-    dstPixelData->setVR(m_VRPixelData);
     OFunique_ptr<DcmSequenceOfItems> dstPerFrameSeq(new DcmSequenceOfItems(DCM_PerFrameFunctionalGroupsSequence));
     if (!dstPixelData || !dstPerFrameSeq)
     {
@@ -190,7 +189,8 @@ OFCondition ConcatenationCreator::writeNextInstance(DcmItem& dstDataset)
     {
         return EC_MemoryExhausted;
     }
-    // dump source pixel data to coutprint(
+    // Setting VR is necessary if Pixel Data is actually 16 bit
+    dstPixelData->setVR(m_VRPixelData);
     size_t srcPos = (m_numBitsFrame * m_currentSrcFrame) / 8;
     memcpy(dstData, &(OFstatic_cast(Uint8*, m_srcPixelData->getPixelData())[srcPos]), numTotalBytesInstance);
     result = dstDataset.insert(dstPixelData.release());

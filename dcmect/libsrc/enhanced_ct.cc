@@ -109,10 +109,10 @@ struct EctEnhancedCT::WriteVisitor
         {
             pixData->setVR(EVR_OW);
             Uint16* ptr          = NULL;
-            size_t numBytesTotal = numBytesFrame * numFrames / 2;
+            size_t numBytesTotal = numBytesFrame * numFrames;
             if (numBytesTotal <= 4294967294UL)
             {
-                result = pixData->createUint16Array(OFstatic_cast(Uint32, numBytesTotal), ptr);
+                result = pixData->createUint16Array(OFstatic_cast(Uint32, numBytesTotal / 2), ptr);
                 // copy all frames into CT's frame structure
                 if (ptr)
                 {
