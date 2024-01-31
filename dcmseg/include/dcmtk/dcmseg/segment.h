@@ -33,10 +33,8 @@
  *  Description Macro.
  */
 
-template <class>
 class DcmSegmentation;
 
-template <typename BitsAlloc>
 class DCMTK_DCMSEG_EXPORT DcmSegment
 {
 
@@ -276,7 +274,7 @@ protected:
      *  Segmentation.
      *  @param  doc Pointer to the Segmentation object
      */
-    void referenceSegmentationDoc(DcmSegmentation<BitsAlloc>* doc);
+    void referenceSegmentationDoc(DcmSegmentation* doc);
 
 private:
     /** Private undefined copy constructor
@@ -289,7 +287,7 @@ private:
     DcmSegment& operator=(const DcmSegment&);
 
     /// The segmentation document where this segment is located in
-    DcmSegmentation<BitsAlloc>* m_SegmentationDoc;
+    DcmSegmentation* m_SegmentationDoc;
 
     /// Segment Description Macro
     SegmentDescriptionMacro m_SegmentDescription;

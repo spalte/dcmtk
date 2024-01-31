@@ -151,7 +151,7 @@ public:
                 ss << STD_NAMESPACE hex << (Uint16)pixData[i] + " ";
             }
             ss << "\n";
-            return ss.str();
+            return ss.str().c_str();
         }
 
         /// Array for the pixel data bytes

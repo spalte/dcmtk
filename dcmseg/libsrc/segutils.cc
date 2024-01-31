@@ -25,6 +25,9 @@
 #include "dcmtk/dcmseg/segdef.h"
 #include "dcmtk/dcmseg/segutils.h"
 
+
+
+template<>
 DcmIODTypes::Frame<Uint8>* DcmSegUtils::packBinaryFrame(const Uint8* pixelData, const Uint16 rows, const Uint16 columns)
 {
     // Sanity checking
@@ -63,6 +66,13 @@ DcmIODTypes::Frame<Uint8>* DcmSegUtils::packBinaryFrame(const Uint8* pixelData, 
             |= (pixelData[count] != 0) /* value to set */ << (count % 8 /* bit position (0-7) within byte */);
     }
     return frame;
+}
+
+template<typename T>
+DcmIODTypes::Frame<T>* DcmSegUtils::packBinaryFrame(const T* pixelData, const Uint16 rows, const Uint16 columns)
+{
+    DCMSEG_ERROR("Cannot pack binary frame: Only Uint8 pixel data supported");
+    return NULL;
 }
 
 DcmIODTypes::Frame<Uint8>* DcmSegUtils::unpackBinaryFrame(const DcmIODTypes::Frame<Uint8>* frame, Uint16 rows, Uint16 cols)
@@ -176,3 +186,7 @@ OFString DcmSegUtils::debugByte2Bin(Uint8 b)
     }
     return result;
 }
+
+// instantiate template functions addFrame() and addFrame() for Uint8 and Uint16
+template DcmIODTypes::Frame<Uint16>* DcmSegUtils::packBinaryFrame(const Uint16* pixelData, const Uint16 rows, const Uint16 columns);
+

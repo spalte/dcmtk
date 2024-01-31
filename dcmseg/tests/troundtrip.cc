@@ -37,8 +37,6 @@
 #include "dcmtk/ofstd/oftempf.h"
 #include "dcmtk/ofstd/oftest.h"
 
-typedef DcmSegmentation<Uint8> DcmSegmentation_U8;
-
 static const Uint8 NUM_ROWS             = 10;
 static const Uint8 NUM_COLS             = 10;
 static const Uint8 NUM_FRAMES           = 10;
@@ -47,16 +45,16 @@ static const Uint8 NUM_PIXELS_PER_FRAME = NUM_COLS * NUM_ROWS;
 static OFString EXPECTED_DUMP;
 
 static void prepareExpectedDump();
-static DcmSegmentation_U8* create();
-static void setGenericValues(DcmSegmentation_U8* seg);
-static void addSharedFGs(DcmSegmentation_U8* seg);
-static void addFrames(DcmSegmentation_U8* seg);
-static void addDimensions(DcmSegmentation_U8* seg);
-static OFString write(DcmSegmentation_U8* seg, DcmDataset& ds);
-static void writeAndCheckConcatenation(DcmSegmentation_U8* seg, OFList<OFFilename>& concats);
+static DcmSegmentation* create();
+static void setGenericValues(DcmSegmentation* seg);
+static void addSharedFGs(DcmSegmentation* seg);
+static void addFrames(DcmSegmentation* seg);
+static void addDimensions(DcmSegmentation* seg);
+static OFString write(DcmSegmentation* seg, DcmDataset& ds);
+static void writeAndCheckConcatenation(DcmSegmentation* seg, OFList<OFFilename>& concats);
 static void checkCreatedObject(const OFString& ds_dump);
 static void loadAndCheckConcatenation(const OFList<OFFilename>& concats);
-static void checkConcatenationInstance(size_t numInstance, DcmSegmentation_U8* srcInstance, DcmDataset* concatInstance);
+static void checkConcatenationInstance(size_t numInstance, DcmSegmentation* srcInstance, DcmDataset* concatInstance);
 
 OFTEST(dcmseg_roundtrip)
 {
@@ -68,7 +66,7 @@ OFTEST(dcmseg_roundtrip)
     }
 
     // Creation
-    DcmSegmentation_U8* seg = create();
+    DcmSegmentation* seg = create();
     setGenericValues(seg);
     addSharedFGs(seg);
     addFrames(seg);
@@ -87,12 +85,12 @@ OFTEST(dcmseg_roundtrip)
     OFCHECK(!temp_fn.empty());
     OFCHECK(seg->saveFile(temp_fn.c_str(), EXS_LittleEndianExplicit).good());
 
-    // Read object from dataset into DcmSegmentation_U8 object, write again to dataset and
+    // Read object from dataset into DcmSegmentation object, write again to dataset and
     // check whether object after writing is identical to object after writing.
     // the same expected result
     delete seg;
     seg = NULL;
-    DcmSegmentation_U8::loadFile(temp_fn, seg).good();
+    DcmSegmentation::loadFile(temp_fn, seg).good();
     OFCHECK(seg != OFnullptr);
     if (seg)
     {
@@ -116,19 +114,19 @@ OFTEST(dcmseg_roundtrip)
     delete seg;
 }
 
-static DcmSegmentation_U8* create()
+static DcmSegmentation* create()
 {
     IODGeneralEquipmentModule::EquipmentInfo eq("Open Connections", "OC CT", "4711", "0.1");
     ContentIdentificationMacro ci("1", "LABEL", "DESCRIPTION", "Doe^John");
-    DcmSegmentation_U8* seg = NULL;
+    DcmSegmentation* seg = NULL;
     OFCondition result;
-    DcmSegmentation_U8::createFractionalSegmentation(seg, NUM_ROWS, NUM_COLS, DcmSegTypes::SFT_OCCUPANCY, 255, eq, ci);
+    DcmSegmentation::createFractionalSegmentation(seg, NUM_ROWS, NUM_COLS, DcmSegTypes::SFT_OCCUPANCY, 255, eq, ci);
     OFCHECK(result.good());
     OFCHECK(seg != OFnullptr);
     return seg;
 }
 
-static void setGenericValues(DcmSegmentation_U8* seg)
+static void setGenericValues(DcmSegmentation* seg)
 {
     if (!seg)
         return;
@@ -156,7 +154,7 @@ static void setGenericValues(DcmSegmentation_U8* seg)
 }
 
 
-static void addSharedFGs(DcmSegmentation_U8* seg)
+static void addSharedFGs(DcmSegmentation* seg)
 {
     if (!seg)
         return;
@@ -177,7 +175,7 @@ static void addSharedFGs(DcmSegmentation_U8* seg)
     OFCHECK(seg->addForAllFrames(planor).good());
 }
 
-static void addFrames(DcmSegmentation_U8* seg)
+static void addFrames(DcmSegmentation* seg)
 {
     if (!seg)
         return;
@@ -190,10 +188,10 @@ static void addFrames(DcmSegmentation_U8* seg)
     {
         for (Uint16 frameNo = 1; frameNo <= NUM_FRAMES; frameNo++)
         {
-            DcmSegment<Uint8>* segment = NULL;
+            DcmSegment* segment = NULL;
             CodeSequenceMacro category("85756007", "SCT", "Tissue");
             CodeSequenceMacro propType("51114001", "SCT", "Artery");
-            OFCHECK(DcmSegment<Uint8>::create(segment, "SEGLABEL", category, propType, DcmSegTypes::SAT_AUTOMATIC, "OC_DUMMY")
+            OFCHECK(DcmSegment::create(segment, "SEGLABEL", category, propType, DcmSegTypes::SAT_AUTOMATIC, "OC_DUMMY")
                         .good());
             OFCHECK(segment != OFnullptr);
             OFCHECK(seg->addSegment(segment, frameNo).good());
@@ -225,7 +223,7 @@ static void addFrames(DcmSegmentation_U8* seg)
     delete fg_seg;
 }
 
-static void addDimensions(DcmSegmentation_U8* seg)
+static void addDimensions(DcmSegmentation* seg)
 {
     if (!seg)
         return;
@@ -247,7 +245,7 @@ static void addDimensions(DcmSegmentation_U8* seg)
     }
 }
 
-static OFString write(DcmSegmentation_U8* seg, DcmDataset& ds)
+static OFString write(DcmSegmentation* seg, DcmDataset& ds)
 {
     OFCondition result = seg->writeDataset(ds);
     OFCHECK(result.good());
@@ -259,7 +257,7 @@ static OFString write(DcmSegmentation_U8* seg, DcmDataset& ds)
     return dump;
 }
 
-static void writeAndCheckConcatenation(DcmSegmentation_U8* seg, OFList<OFFilename>& concats)
+static void writeAndCheckConcatenation(DcmSegmentation* seg, OFList<OFFilename>& concats)
 {
     ConcatenationCreator cc;
     cc.setCfgFramesPerInstance(1);
@@ -286,10 +284,10 @@ static void writeAndCheckConcatenation(DcmSegmentation_U8* seg, OFList<OFFilenam
     }
 }
 
-static void checkConcatenationInstance(size_t numInstance, DcmSegmentation_U8* srcInstance, DcmDataset* concatInstance)
+static void checkConcatenationInstance(size_t numInstance, DcmSegmentation* srcInstance, DcmDataset* concatInstance)
 {
-    DcmSegmentation_U8* concat = NULL;
-    OFCHECK(DcmSegmentation_U8::loadDataset(*concatInstance, concat).good());
+    DcmSegmentation* concat = NULL;
+    OFCHECK(DcmSegmentation::loadDataset(*concatInstance, concat).good());
     if (concat == NULL) return; // loadDataset() failed, we cannot continue
     size_t numFrames;
     numFrames = concat->getNumberOfFrames();
@@ -358,7 +356,7 @@ static void checkConcatenationInstance(size_t numInstance, DcmSegmentation_U8* s
     OFCHECK(fg != NULL);
     OFCHECK(perFrame == OFFalse);
 
-    const DcmIODTypes::Frame<Uint8>* frame = concat->getFrame(0);
+    const DcmIODTypes::Frame<Uint8>* frame = OFstatic_cast(const DcmIODTypes::Frame<Uint8>*, concat->getFrame(0));
     OFCHECK(frame != OFnullptr);
     OFCHECK(frame->pixData != OFnullptr);
     OFCHECK(OFstatic_cast(Uint8, frame->length) == NUM_PIXELS_PER_FRAME);
@@ -380,8 +378,8 @@ static void loadAndCheckConcatenation(const OFList<OFFilename>& concats)
         OFCHECK(results.size() == 1);
         if (results.size() != 1)
             return;
-        DcmSegmentation_U8* seg = NULL;
-        result               = DcmSegmentation_U8::loadConcatenation(cl, results.begin()->first, seg);
+        DcmSegmentation* seg = NULL;
+        result               = DcmSegmentation::loadConcatenation(cl, results.begin()->first, seg);
 
         OFCHECK(result.good());
         if (result.good())

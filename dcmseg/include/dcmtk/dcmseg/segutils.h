@@ -40,7 +40,9 @@ public:
      *   @param  columns The number of columns in the pixel data
      *   @return The frame data if successful, NULL if an error occurs
      */
-    static DcmIODTypes::Frame<Uint8>* packBinaryFrame(const Uint8* pixelData, const Uint16 rows, const Uint16 columns);
+
+    template <typename T>
+    static DcmIODTypes::Frame<T>* packBinaryFrame(const T* pixelData, const Uint16 rows, const Uint16 columns);
 
     /** Compute the number of bytes required for a binary pixel data frame,
      *  given the number of pixels

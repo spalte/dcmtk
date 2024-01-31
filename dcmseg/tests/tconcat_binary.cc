@@ -45,8 +45,8 @@ OFTEST(dcmseg_concat_binary)
     }
 
     // Loading
-    DcmSegmentation<Uint8>* seg = NULL;
-    OFCondition result   = DcmSegmentation<Uint8>::loadFile(ATLAS_FILE, seg);
+    DcmSegmentation* seg = NULL;
+    OFCondition result   = DcmSegmentation::loadFile(ATLAS_FILE, seg);
     if (result.good())
     {
         ConcatenationCreator cc;
@@ -97,7 +97,7 @@ OFTEST(dcmseg_concat_binary)
             {
                 OFVector<DcmIODTypes::Frame<Uint8>*> frames;
                 DcmFileFormat dcmff;
-                result = DcmSegmentation<Uint8>::loadConcatenation(cl, cl.getInfo().begin()->first, seg);
+                result = DcmSegmentation::loadConcatenation(cl, cl.getInfo().begin()->first, seg);
                 if (result.good())
                 {
                     seg->setCheckFGOnWrite(OFFalse);

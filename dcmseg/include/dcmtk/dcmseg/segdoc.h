@@ -48,8 +48,7 @@ class FGDerivationImage;
 /** Class representing an object of the "Segmentation SOP Class".
  */
 
-template <typename BitsAlloc>
-class DCMTK_DCMSEG_EXPORT DcmSegmentation : public DcmIODImage<IODImagePixelModule<BitsAlloc>>
+class DCMTK_DCMSEG_EXPORT DcmSegmentation : public DcmIODImage< IODImagePixelModule<Uint8> >
 {
 
 public:
@@ -237,6 +236,8 @@ public:
 
     // -------------------- access ---------------------
 
+    OFBool has16BitPixelData() const;
+
     /** Get number of frames, based on the number of items in the shared
      *  functional functional groups sequence (i.e.\ the attribute Number of
      *  Frames) is not trusted). Note that this returns the numbers of frames
@@ -315,14 +316,14 @@ public:
      *  @param  segmentNumber The logical segment number
      *  @return The segment if segment number is valid, NULL otherwise
      */
-    virtual DcmSegment<BitsAlloc>* getSegment(const size_t segmentNumber);
+    virtual DcmSegment* getSegment(const size_t segmentNumber);
 
     /** Get logical segment number by providing a pointer to a given segment
      *  @param  segment The segment to find the logical segment number for
      *  @param  segmentNumber The segment number. 0 if segment could not be found.
      *  @return OFTrue if segment could be found, OFFalse otherwise.
      */
-    virtual OFBool getSegmentNumber(const DcmSegment<BitsAlloc>* segment, size_t& segmentNumber);
+    virtual OFBool getSegmentNumber(const DcmSegment* segment, size_t& segmentNumber);
 
     /** Reference to the Performed Procedure Step that led to the creation of this
      *  segmentation object. This is required if this object is created in an MPPS
@@ -335,7 +336,7 @@ public:
      *  @param  frameNo The number of the frame to get (starting with 0)
      *  @return The frame requested or NULL if not existing
      */
-    virtual const DcmIODTypes::Frame<BitsAlloc>* getFrame(const size_t& frameNo);
+    virtual const DcmIODTypes::FrameBase* getFrame(const size_t& frameNo);
 
     /** Get the frame numbers that belong to a specific segment number
      *  @param  segmentNumber The segment to search frames for
@@ -351,7 +352,7 @@ public:
      *          this segment. Contains 0 if adding failed.
      *  @return EC_Normal if adding was successful, error otherwise
      */
-    virtual OFCondition addSegment(DcmSegment<BitsAlloc>* seg, Uint16& segmentNumber);
+    virtual OFCondition addSegment(DcmSegment* seg, Uint16& segmentNumber);
 
     /** Add a functional group for all frames
      *  @param  group The group to be added as shared functional group. The
@@ -373,8 +374,13 @@ public:
      *          with the caller no matter what the method returns.
      *  @return EC_Normal if adding was successful, error otherwise
      */
-    virtual OFCondition
-    addFrame(BitsAlloc* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation);
+    template<typename T>
+    OFCondition
+    addFrame(T* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation);
+
+    // virtual OFCondition
+    // addFrame(Uint16* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation);
+
 
     /** Return reference to content content identification of this segmentation object
      *  @return Reference to content identification data
@@ -460,7 +466,7 @@ protected:
     /** Protected default constructor. Library users should the factory create..()
      *  method in order to create an object from scratch
      */
-    DcmSegmentation<BitsAlloc>();
+    DcmSegmentation();
 
     /** Overwrites DcmIODImage::read()
      *  @param  dataset The dataset to read from
@@ -480,7 +486,9 @@ protected:
      *  @param  pixDataLength Length of pixData buffer
      *  @return EC_Normal if writing succeeded, error otherwise
      */
-    OFCondition writeWithSeparatePixelData(DcmItem& dataset, BitsAlloc*& pixData, size_t& pixDataLength);
+    OFCondition writeWithSeparatePixelData(DcmItem& dataset, Uint8*& pixData, size_t& pixDataLength);
+
+    OFCondition writeWithSeparatePixelData(DcmItem& dataset, Uint16*& pixData, size_t& pixDataLength);
 
     /** Create those data structures common for binary and fractional
      *  segmentations
@@ -501,7 +509,7 @@ protected:
      *  the image pixel module manually.
      *  @return The Image Pixel Module
      */
-    virtual IODImagePixelModule<BitsAlloc>& getImagePixel();
+    IODImagePixelModule<Uint8>& getImagePixel();
 
     /** Initialize IOD rules
      */
@@ -517,7 +525,8 @@ protected:
      *  @param  pixData The filled pixel data buffer returned by the method
      *  @return EC_Normal if writing was successful, error otherwise
      */
-    OFCondition writeByteBasedFrames(BitsAlloc* pixData);
+    template<typename T>
+    OFCondition writeByteBasedFrames(T* pixData);
 
     /** Write binary frames to given given pixel data buffer
      *  @param  pixData The filled pixel data buffer returned by the method
@@ -526,7 +535,7 @@ protected:
      *  @param  pixDataLength The length of buffer in pixData (in bytes) returned by this method.
      *  @return EC_Normal if writing was successful, error otherwise
      */
-    virtual OFCondition writeBinaryFrames(BitsAlloc* pixData, Uint16 rows, Uint16 cols, const size_t pixDataLength);
+    virtual OFCondition writeBinaryFrames(Uint8* pixData, Uint16 rows, Uint16 cols, const size_t pixDataLength);
 
     /** Write Segmentation Image Module
      *  @param dataset The item to write to, usually main dataset level
@@ -596,18 +605,25 @@ protected:
      *  @param bitsPerFrame Bits required per frame, usually rows * columns
      *  @return EC_Normal if concatenation was successful, error otherwise
      */
-    virtual OFCondition concatFrames(OFVector<DcmIODTypes::FrameBase*> frames, BitsAlloc* pixData, const size_t bitsPerFrame);
+    virtual OFCondition concatFrames(OFVector<DcmIODTypes::FrameBase*> frames, Uint8* pixData, const size_t bitsPerFrame);
 
     /** Add frame to segmentation object.
      *  @param  pixData Pixel data to be added. Length must be rows*columns bytes.
      *          Pixel data is copied so it must be freed by the caller.
      *  @return EC_Normal if adding was successful, error otherwise
      */
-    virtual OFCondition addFrame(BitsAlloc* pixData);
+    template<typename T>
+     OFCondition addFrame(T* pixData);
+
+    // /** Add frame to segmentation object.
+    //  *  @param  pixData Pixel data to be added. Length must be rows*columns bytes.
+    //  *          Pixel data is copied so it must be freed by the caller.
+    //  *  @return EC_Normal if adding was successful, error otherwise
+    //  */
+    // virtual OFCondition addFrame(Uint16* pixData);
 
 private:
 
-    BitsAlloc m_BitsAllocType;
     // Modules supported:
     //
     // Patient Module (through DcmIODImage)
@@ -641,6 +657,9 @@ private:
     /// Binary frame data
     OFVector<DcmIODTypes::FrameBase*> m_Frames;
 
+    /// Denotes whether 16 bit pixel data is used
+    OFBool m_16BitPixelData;
+
     /* Image level information */
 
     /// Image Type: (CS, VM 2-n, Type 1), in Segmentations fixed to "DERIVED\PRIMARY"
@@ -661,7 +680,7 @@ private:
     DcmUnsignedShort m_MaximumFractionalValue;
 
     /// Segment descriptions from Segment Sequence
-    OFVector<DcmSegment<BitsAlloc>*> m_Segments;
+    OFVector<DcmSegment*> m_Segments;
 
     /// Multi-frame Functional Groups high level interface
     FGInterface m_FGInterface;

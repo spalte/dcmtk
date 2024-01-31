@@ -38,8 +38,6 @@
 #include "dcmtk/ofstd/ofstrutl.h"
 #include "dcmtk/ofstd/oftempf.h"
 
-typedef DcmSegmentation<Uint8> DcmSegmentation_U8;
-
 static const Uint8 NUM_ROWS             = 5;
 static const Uint8 NUM_COLS             = 5;
 
@@ -50,16 +48,22 @@ static const Uint16 NUM_SEGS             = DCM_SEG_MAX_SEGMENTS;
 
 static const Uint8 NUM_PIXELS_PER_FRAME = NUM_COLS * NUM_ROWS;
 
-static DcmSegmentation_U8* create();
-static void setGenericValues(DcmSegmentation_U8* seg);
-static void addSharedFGs(DcmSegmentation_U8* seg);
-static void addSegments(DcmSegmentation_U8* seg);
-static void addFrames(DcmSegmentation_U8* seg);
-static void addDimensions(DcmSegmentation_U8* seg);
+static DcmSegmentation* create();
+static void setGenericValues(DcmSegmentation* seg);
+static void addSharedFGs(DcmSegmentation* seg);
+static void addSegments(DcmSegmentation* seg);
+static void addFrames(DcmSegmentation* seg);
+static void addDimensions(DcmSegmentation* seg);
 static void checkCreatedObject(DcmDataset& seg);
 
 OFTEST_FLAGS(dcmseg_bigdim, EF_Slow)
 {
+    // TODO: REMOVE
+    DcmSegmentation* seg2;
+    DcmSegmentation::loadFile("test", seg2);
+
+
+
     // Make sure data dictionary is loaded
     if (!dcmDataDict.isDictionaryLoaded())
     {
@@ -68,7 +72,7 @@ OFTEST_FLAGS(dcmseg_bigdim, EF_Slow)
     }
 
     // Creation
-    DcmSegmentation_U8* seg = create();
+    DcmSegmentation* seg = create();
     setGenericValues(seg);
     addSharedFGs(seg);
     addSegments(seg);
@@ -89,12 +93,12 @@ OFTEST_FLAGS(dcmseg_bigdim, EF_Slow)
     OFCHECK(!temp_fn.empty());
     OFCHECK(dcmff.saveFile(temp_fn.c_str(), EXS_LittleEndianExplicit).good());
 
-    // Read object from dataset into DcmSegmentation_U8 object, write again to dataset and
+    // Read object from dataset into DcmSegmentation object, write again to dataset and
     // check whether object after writing is identical to object after writing.
     // the same expected result
     delete seg;
     seg = NULL;
-    DcmSegmentation_U8::loadFile(temp_fn, seg).good();
+    DcmSegmentation::loadFile(temp_fn, seg).good();
     OFCHECK(seg != OFnullptr);
     if (seg)
     {
@@ -107,13 +111,13 @@ OFTEST_FLAGS(dcmseg_bigdim, EF_Slow)
     }
 }
 
-static DcmSegmentation_U8* create()
+static DcmSegmentation* create()
 {
     IODGeneralEquipmentModule::EquipmentInfo eq("Open Connections", "OC CT", "4711", "0.1");
     ContentIdentificationMacro ci("1", "LABEL", "DESCRIPTION", "Doe^John");
-    DcmSegmentation_U8* seg = NULL;
+    DcmSegmentation* seg = NULL;
     OFCondition result;
-    DcmSegmentation_U8::createFractionalSegmentation(seg, NUM_ROWS, NUM_COLS, DcmSegTypes::SFT_OCCUPANCY, 255, eq, ci);
+    DcmSegmentation::createFractionalSegmentation(seg, NUM_ROWS, NUM_COLS, DcmSegTypes::SFT_OCCUPANCY, 255, eq, ci);
     OFCHECK(result.good());
     OFCHECK(seg != OFnullptr);
     seg->setCheckFGOnWrite(OFFalse);
@@ -121,7 +125,7 @@ static DcmSegmentation_U8* create()
     return seg;
 }
 
-static void setGenericValues(DcmSegmentation_U8* seg)
+static void setGenericValues(DcmSegmentation* seg)
 {
     if (!seg)
         return;
@@ -147,7 +151,7 @@ static void setGenericValues(DcmSegmentation_U8* seg)
     OFCHECK(seg->getGeneralImage().setContentTime("153857").good());
 }
 
-static void addSharedFGs(DcmSegmentation_U8* seg)
+static void addSharedFGs(DcmSegmentation* seg)
 {
     if (!seg)
         return;
@@ -170,16 +174,16 @@ static void addSharedFGs(DcmSegmentation_U8* seg)
 
 
 
-static void addSegments(DcmSegmentation_U8* seg)
+static void addSegments(DcmSegmentation* seg)
 {
     for (Uint16 s = 0; s < NUM_SEGS; s++)
     {
-        DcmSegment<Uint8>* segment = NULL;
+        DcmSegment* segment = NULL;
         CodeSequenceMacro category("85756007", "SCT", "Tissue");
         CodeSequenceMacro propType("51114001", "SCT", "Artery");
         char buf[100];
         sprintf(buf, "SEGLABEL_%hu", s);
-        OFCHECK(DcmSegment<Uint8>::create(segment, buf, category, propType, DcmSegTypes::SAT_AUTOMATIC, "OC_DUMMY")
+        OFCHECK(DcmSegment::create(segment, buf, category, propType, DcmSegTypes::SAT_AUTOMATIC, "OC_DUMMY")
                     .good());
         OFCHECK(segment != OFnullptr);
         Uint16 dontCare = 0;
@@ -188,7 +192,7 @@ static void addSegments(DcmSegmentation_U8* seg)
 }
 
 
-static void addFrames(DcmSegmentation_U8* seg)
+static void addFrames(DcmSegmentation* seg)
 {
     if (!seg)
         return;
@@ -231,7 +235,7 @@ static void addFrames(DcmSegmentation_U8* seg)
     delete fg_seg;
 }
 
-static void addDimensions(DcmSegmentation_U8* seg)
+static void addDimensions(DcmSegmentation* seg)
 {
     if (!seg)
         return;
