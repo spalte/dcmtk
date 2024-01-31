@@ -27,11 +27,11 @@
 #include "dcmtk/dcmseg/segtypes.h"
 
 OFCondition DcmSegment::create(DcmSegment*& segment,
-                                          const OFString& segmentLabel,
-                                          const CodeSequenceMacro& segmentedPropertyCategory,
-                                          const CodeSequenceMacro& segmentedPropertyType,
-                                          const DcmSegTypes::E_SegmentAlgoType algoType,
-                                          const OFString& algoName)
+                               const OFString& segmentLabel,
+                               const CodeSequenceMacro& segmentedPropertyCategory,
+                               const CodeSequenceMacro& segmentedPropertyType,
+                               const DcmSegTypes::E_SegmentAlgoType algoType,
+                               const OFString& algoName)
 
 {
     segment = new DcmSegment();
@@ -66,7 +66,6 @@ OFCondition DcmSegment::create(DcmSegment*& segment,
     return result;
 }
 
-
 OFCondition DcmSegment::read(DcmItem& item, const OFBool clearOldData)
 {
     if (clearOldData)
@@ -90,7 +89,6 @@ OFCondition DcmSegment::read(DcmItem& item, const OFBool clearOldData)
 
     return EC_Normal;
 }
-
 
 OFCondition DcmSegment::write(DcmItem& item)
 {
@@ -118,7 +116,6 @@ OFCondition DcmSegment::write(DcmItem& item)
     return result;
 }
 
-
 void DcmSegment::clearData()
 {
     m_SegmentDescription.clearData();
@@ -129,7 +126,6 @@ void DcmSegment::clearData()
     m_TrackingID.clear();
     m_TrackingUID.clear();
 }
-
 
 DcmSegment::~DcmSegment()
 {
@@ -152,7 +148,6 @@ DcmSegment::DcmSegment()
     initIODRules();
 }
 
-
 void DcmSegment::initIODRules()
 {
     m_Rules.addRule(new IODRule(DCM_SegmentAlgorithmName, "1", "1C", "SegmentationImageModule", DcmIODTypes::IE_IMAGE),
@@ -168,7 +163,6 @@ void DcmSegment::initIODRules()
 }
 
 // -------------- getters --------------------
-
 
 Uint16 DcmSegment::getSegmentNumber()
 {
@@ -189,66 +183,55 @@ Uint16 DcmSegment::getSegmentNumber()
     return value;
 }
 
-
 OFCondition DcmSegment::getSegmentLabel(OFString& value, const signed long pos)
 {
     return m_SegmentDescription.getSegmentLabel(value, pos);
 }
-
 
 OFCondition DcmSegment::getSegmentDescription(OFString& value, const signed long pos)
 {
     return m_SegmentDescription.getSegmentDescription(value, pos);
 }
 
-
 DcmSegTypes::E_SegmentAlgoType DcmSegment::getSegmentAlgorithmType()
 {
     return m_SegmentDescription.getSegmentAlgorithmType();
 }
-
 
 OFCondition DcmSegment::getSegmentAlgorithmName(OFString& value, const signed long pos)
 {
     return DcmIODUtil::getStringValueFromElement(m_SegmentAlgorithmName, value, pos);
 }
 
-
 GeneralAnatomyMacro& DcmSegment::getGeneralAnatomyCode()
 {
     return m_SegmentDescription.getGeneralAnatomyCode();
 }
-
 
 AlgorithmIdentificationMacro& DcmSegment::getSegmentationAlgorithmIdentification()
 {
     return m_SegmentationAlgorithmIdentification;
 }
 
-
 CodeSequenceMacro& DcmSegment::getSegmentedPropertyCategoryCode()
 {
     return m_SegmentDescription.getSegmentedPropertyCategoryCode();
 }
-
 
 CodeSequenceMacro& DcmSegment::getSegmentedPropertyTypeCode()
 {
     return m_SegmentDescription.getSegmentedPropertyTypeCode();
 }
 
-
 OFVector<CodeSequenceMacro*>& DcmSegment::getSegmentedPropertyTypeModifierCode()
 {
     return m_SegmentDescription.getSegmentedPropertyTypeModifier();
 }
 
-
 OFCondition DcmSegment::getRecommendedDisplayGrayscaleValue(Uint16& value, const unsigned long pos)
 {
     return m_RecommendedDisplayGrayscaleValue.getUint16(value, pos);
 }
-
 
 OFCondition DcmSegment::getRecommendedDisplayCIELabValue(Uint16& L, Uint16& a, Uint16& b)
 {
@@ -262,12 +245,10 @@ OFCondition DcmSegment::getRecommendedDisplayCIELabValue(Uint16& L, Uint16& a, U
     return result;
 }
 
-
 OFCondition DcmSegment::getTrackingID(OFString& value, const signed long pos)
 {
     return DcmIODUtil::getStringValueFromElement(m_TrackingID, value, pos);
 }
-
 
 OFCondition DcmSegment::getTrackingUID(OFString& value, const signed long pos)
 {
@@ -276,22 +257,19 @@ OFCondition DcmSegment::getTrackingUID(OFString& value, const signed long pos)
 
 // -------------- setters --------------------
 
-
 OFCondition DcmSegment::setSegmentLabel(const OFString& value, const OFBool checkValue)
 {
     return m_SegmentDescription.setSegmentLabel(value, checkValue);
 }
-
 
 OFCondition DcmSegment::setSegmentDescription(const OFString& value, const OFBool checkValue)
 {
     return m_SegmentDescription.setSegmentDescription(value, checkValue);
 }
 
-
 OFCondition DcmSegment::setSegmentAlgorithm(const DcmSegTypes::E_SegmentAlgoType algoType,
-                                                       const OFString& algoName,
-                                                       const OFBool checkValue)
+                                            const OFString& algoName,
+                                            const OFBool checkValue)
 {
     if (checkValue && algoType == DcmSegTypes::SAT_UNKNOWN)
     {
@@ -325,9 +303,8 @@ OFCondition DcmSegment::setSegmentAlgorithm(const DcmSegTypes::E_SegmentAlgoType
     return result;
 }
 
-
 OFCondition DcmSegment::setSegmentationAlgorithmIdentification(const AlgorithmIdentificationMacro& value,
-                                                                          const OFBool checkValue)
+                                                               const OFBool checkValue)
 {
     m_SegmentationAlgorithmIdentification = value;
     OFCondition result;
@@ -344,15 +321,12 @@ OFCondition DcmSegment::setSegmentationAlgorithmIdentification(const AlgorithmId
     return result;
 }
 
-
 OFCondition DcmSegment::setRecommendedDisplayGrayscaleValue(const Uint16 value, const OFBool)
 {
     return m_RecommendedDisplayGrayscaleValue.putUint16(value, 0);
 }
 
-
-OFCondition
-DcmSegment::setRecommendedDisplayCIELabValue(const Uint16 r, const Uint16 g, const Uint16 b, const OFBool)
+OFCondition DcmSegment::setRecommendedDisplayCIELabValue(const Uint16 r, const Uint16 g, const Uint16 b, const OFBool)
 {
     OFCondition result = m_RecommendedDisplayCIELabValue.putUint16(r, 0);
     if (result.good())
@@ -362,14 +336,12 @@ DcmSegment::setRecommendedDisplayCIELabValue(const Uint16 r, const Uint16 g, con
     return result;
 }
 
-
 OFCondition DcmSegment::setTrackingID(const OFString& value, const OFBool checkValue)
 {
     // avoid compile warning on unused variable
     (void)checkValue;
     return m_TrackingID.putOFStringArray(value);
 }
-
 
 OFCondition DcmSegment::setTrackingUID(const OFString& value, const OFBool checkValue)
 {
@@ -384,7 +356,6 @@ OFCondition DcmSegment::setTrackingUID(const OFString& value, const OFBool check
     }
     return result;
 }
-
 
 void DcmSegment::referenceSegmentationDoc(DcmSegmentation* doc)
 {

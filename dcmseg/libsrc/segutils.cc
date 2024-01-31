@@ -25,9 +25,7 @@
 #include "dcmtk/dcmseg/segdef.h"
 #include "dcmtk/dcmseg/segutils.h"
 
-
-
-template<>
+template <>
 DcmIODTypes::Frame<Uint8>* DcmSegUtils::packBinaryFrame(const Uint8* pixelData, const Uint16 rows, const Uint16 columns)
 {
     // Sanity checking
@@ -68,14 +66,15 @@ DcmIODTypes::Frame<Uint8>* DcmSegUtils::packBinaryFrame(const Uint8* pixelData, 
     return frame;
 }
 
-template<typename T>
+template <typename T>
 DcmIODTypes::Frame<T>* DcmSegUtils::packBinaryFrame(const T* pixelData, const Uint16 rows, const Uint16 columns)
 {
     DCMSEG_ERROR("Cannot pack binary frame: Only Uint8 pixel data supported");
     return NULL;
 }
 
-DcmIODTypes::Frame<Uint8>* DcmSegUtils::unpackBinaryFrame(const DcmIODTypes::Frame<Uint8>* frame, Uint16 rows, Uint16 cols)
+DcmIODTypes::Frame<Uint8>*
+DcmSegUtils::unpackBinaryFrame(const DcmIODTypes::Frame<Uint8>* frame, Uint16 rows, Uint16 cols)
 {
     // Sanity checking
     if ((frame == NULL) || (rows == 0) || (cols == 0))
@@ -85,7 +84,7 @@ DcmIODTypes::Frame<Uint8>* DcmSegUtils::unpackBinaryFrame(const DcmIODTypes::Fra
     }
 
     // Create result frame in memory
-    size_t numBits             = OFstatic_cast(size_t, rows) * cols;
+    size_t numBits                    = OFstatic_cast(size_t, rows) * cols;
     DcmIODTypes::Frame<Uint8>* result = new DcmIODTypes::Frame<Uint8>();
     if (result)
     {
@@ -188,5 +187,5 @@ OFString DcmSegUtils::debugByte2Bin(Uint8 b)
 }
 
 // instantiate template functions addFrame() and addFrame() for Uint8 and Uint16
-template DcmIODTypes::Frame<Uint16>* DcmSegUtils::packBinaryFrame(const Uint16* pixelData, const Uint16 rows, const Uint16 columns);
-
+template DcmIODTypes::Frame<Uint16>*
+DcmSegUtils::packBinaryFrame(const Uint16* pixelData, const Uint16 rows, const Uint16 columns);

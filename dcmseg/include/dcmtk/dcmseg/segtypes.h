@@ -83,7 +83,6 @@ extern DCMTK_DCMSEG_EXPORT const OFConditionConst SG_EC_MaxFramesReached;
 /// error: invalid bit depth
 extern DCMTK_DCMSEG_EXPORT const OFConditionConst SG_EC_InvalidBitDepth;
 
-
 /** General purpose class hiding global functions, constants and types in the
  *  segmentation context from the global namespace.
  */

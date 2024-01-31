@@ -44,11 +44,10 @@
 class FGSegmentation;
 class FGDerivationImage;
 
-
 /** Class representing an object of the "Segmentation SOP Class".
  */
 
-class DCMTK_DCMSEG_EXPORT DcmSegmentation : public DcmIODImage< IODImagePixelModule<Uint8> >
+class DCMTK_DCMSEG_EXPORT DcmSegmentation : public DcmIODImage<IODImagePixelModule<Uint8>>
 {
 
 public:
@@ -374,13 +373,11 @@ public:
      *          with the caller no matter what the method returns.
      *  @return EC_Normal if adding was successful, error otherwise
      */
-    template<typename T>
-    OFCondition
-    addFrame(T* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation);
+    template <typename T>
+    OFCondition addFrame(T* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation);
 
     // virtual OFCondition
     // addFrame(Uint16* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation);
-
 
     /** Return reference to content content identification of this segmentation object
      *  @return Reference to content identification data
@@ -525,7 +522,7 @@ protected:
      *  @param  pixData The filled pixel data buffer returned by the method
      *  @return EC_Normal if writing was successful, error otherwise
      */
-    template<typename T>
+    template <typename T>
     OFCondition writeByteBasedFrames(T* pixData);
 
     /** Write binary frames to given given pixel data buffer
@@ -605,15 +602,16 @@ protected:
      *  @param bitsPerFrame Bits required per frame, usually rows * columns
      *  @return EC_Normal if concatenation was successful, error otherwise
      */
-    virtual OFCondition concatFrames(OFVector<DcmIODTypes::FrameBase*> frames, Uint8* pixData, const size_t bitsPerFrame);
+    virtual OFCondition
+    concatFrames(OFVector<DcmIODTypes::FrameBase*> frames, Uint8* pixData, const size_t bitsPerFrame);
 
     /** Add frame to segmentation object.
      *  @param  pixData Pixel data to be added. Length must be rows*columns bytes.
      *          Pixel data is copied so it must be freed by the caller.
      *  @return EC_Normal if adding was successful, error otherwise
      */
-    template<typename T>
-     OFCondition addFrame(T* pixData);
+    template <typename T>
+    OFCondition addFrame(T* pixData);
 
     // /** Add frame to segmentation object.
     //  *  @param  pixData Pixel data to be added. Length must be rows*columns bytes.
@@ -623,7 +621,6 @@ protected:
     // virtual OFCondition addFrame(Uint16* pixData);
 
 private:
-
     // Modules supported:
     //
     // Patient Module (through DcmIODImage)
