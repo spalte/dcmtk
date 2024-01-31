@@ -21,6 +21,7 @@
 
 #include "dcmtk/config/osconfig.h"
 
+#include "dcmtk/dcmdata/dcdeftag.h"
 #include "dcmtk/ofstd/oftypes.h"
 #include "dcmtk/dcmdata/dcuid.h"
 #include "dcmtk/dcmfg/concatenationcreator.h"
@@ -1463,6 +1464,7 @@ OFCondition DcmSegmentation::writeSegmentationImageModule(DcmItem& dataset)
                 getImagePixel().setBitsStored(1);
                 getImagePixel().setHighBit(0);
                 dataset.putAndInsertOFStringArray(DCM_SegmentationType, "BINARY");
+                dataset.putAndInsertOFStringArray(DCM_SegmentsOverlap, "UNDEFINED");
                 break;
             }
             case DcmSegTypes::ST_FRACTIONAL:
@@ -1479,10 +1481,12 @@ OFCondition DcmSegmentation::writeSegmentationImageModule(DcmItem& dataset)
                 if (m_SegmentationType == DcmSegTypes::ST_LABELMAP)
                 {
                     dataset.putAndInsertOFStringArray(DCM_SegmentationType, "LABELMAP");
+                    dataset.putAndInsertOFStringArray(DCM_SegmentsOverlap, "NO");
                 }
                 else
                 {
                     dataset.putAndInsertOFStringArray(DCM_SegmentationType, "FRACTIONAL");
+                    dataset.putAndInsertOFStringArray(DCM_SegmentsOverlap, "UNDEFINED");
                     if (m_SegmentationFractionalType == DcmSegTypes::SFT_OCCUPANCY)
                     {
                         dataset.putAndInsertOFStringArray(DCM_SegmentationFractionalType, "OCCUPANCY");
