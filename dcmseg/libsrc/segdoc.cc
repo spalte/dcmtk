@@ -25,11 +25,9 @@
 #include "dcmtk/dcmdata/dcuid.h"
 #include "dcmtk/dcmfg/concatenationcreator.h"
 #include "dcmtk/dcmfg/fgderimg.h"
+#include "dcmtk/dcmiod/iodtypes.h"
+#include "dcmtk/ofstd/ofcond.h"
 #include "dcmtk/ofstd/oftypes.h"
-// #include "dcmtk/dcmfg/fgfact.h"
-// #include "dcmtk/dcmfg/fgfracon.h"
-// #include "dcmtk/dcmfg/fgplanor.h"
-// #include "dcmtk/dcmfg/fgplanpo.h"
 #include "dcmtk/dcmfg/fgseg.h"
 #include "dcmtk/dcmiod/iodutil.h"
 #include "dcmtk/dcmseg/segdoc.h"
@@ -191,6 +189,23 @@ OFCondition DcmSegmentation::createBinarySegmentation(DcmSegmentation*& segmenta
 
     segmentation->m_SegmentationType = DcmSegTypes::ST_BINARY;
 
+    return result;
+}
+
+
+OFCondition DcmSegmentation::createLabelmapSegmentation(DcmSegmentation *&segmentation,
+                                                        const Uint16 rows,
+                                                        const Uint16 columns,
+                                                        const IODGeneralEquipmentModule::EquipmentInfo &equipmentInfo,
+                                                        const ContentIdentificationMacro &contentIdentification,
+                                                        const OFBool use16Bit)
+{
+    OFCondition result = createCommon(segmentation, rows, columns, equipmentInfo, contentIdentification);
+    if (result.bad())
+        return result;
+
+    segmentation->m_SegmentationType = DcmSegTypes::ST_LABELMAP;
+    segmentation->m_16BitPixelData = use16Bit;
     return result;
 }
 
@@ -644,64 +659,6 @@ OFCondition DcmSegmentation::addFrame(T* pixData)
     return result;
 }
 
-// TODO
-// OFCondition DcmSegmentation::addFrame(Uint16* pixData)
-// {
-//     if (m_Frames.size() >= DCM_SEG_MAX_FRAMES)
-//         return SG_EC_MaxFramesReached;
-
-//     OFCondition result;
-//     Uint16 rows = 0;
-//     Uint16 cols = 0;
-//     if (getImagePixel().getRows(rows).good() && getImagePixel().getColumns(cols).good())
-//     {
-//         DcmIODTypes::Frame<Uint16>* frame = NULL;
-//         switch(m_SegmentationType)
-//         {
-//             case DcmSegTypes::ST_BINARY:
-//                 DCMSEG_ERROR("Binary segmentations must be instantiated with 8 bit pixel data (Uint8)");
-//                 result = IOD_EC_CannotInsertFrame;
-//                 break;
-//             case DcmSegTypes::ST_FRACTIONAL:
-//                 DCMSEG_ERROR("Fractional segmentations must be instantiated with 8 bit pixel data (Uint8)");
-//                 result = IOD_EC_CannotInsertFrame;
-//                 break;
-//             case DcmSegTypes::ST_LABELMAP:
-//             {
-//                 frame                 = new DcmIODTypes::Frame<Uint16>();
-//                 if (frame)
-//                 {
-//                     frame->length  = rows * cols * 2 /* accomodate for 16 bit data */;
-//                     frame->pixData = new Uint16[frame->length];
-//                     if (frame->pixData)
-//                     {
-//                         memcpy(frame->pixData, pixData, frame->length);
-//                     }
-//                     else
-//                     {
-//                         delete frame;
-//                         result = EC_MemoryExhausted;
-//                     }
-//                 }
-//                 else
-//                     result = EC_MemoryExhausted;
-//             }
-//             case DcmSegTypes::ST_UNKNOWN:
-//             default:
-//                 result = SG_EC_UnknownSegmentationType;
-//         }
-//         if (result.good())
-//         {
-//             m_Frames.push_back(frame);
-//         }
-//     }
-//     else
-//     {
-//         DCMSEG_ERROR("Cannot add frame since rows and/or columns are unknown");
-//         result = IOD_EC_CannotInsertFrame;
-//     }
-//     return result;
-// }
 
 SOPInstanceReferenceMacro& DcmSegmentation::getReferencedPPS()
 {
@@ -752,6 +709,17 @@ DcmSegmentation::addFrame(T* pixData, const Uint16 segmentNumber, const OFVector
 {
     if (m_Frames.size() >= DCM_SEG_MAX_FRAMES)
         return SG_EC_MaxFramesReached;
+
+    if (m_16BitPixelData && (sizeof(T) != 16))
+    {
+        DCMSEG_ERROR("Cannot add frame: 16 bit pixel data expected but 8 bit pixel data provided");
+        return IOD_EC_InvalidPixelData;
+    }
+    else if (!m_16BitPixelData && (sizeof(T) == 16))
+    {
+        DCMSEG_ERROR("Cannot add frame: 8 bit pixel data expected but 16 bit pixel data provided");
+        return IOD_EC_InvalidPixelData;
+    }
 
     Uint32 frameNo = OFstatic_cast(Uint32, m_Frames.size()); // will be the index of the frame (counted from 0)
     OFCondition result;

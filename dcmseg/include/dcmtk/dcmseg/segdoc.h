@@ -24,10 +24,8 @@
 
 #include "dcmtk/config/osconfig.h" // include OS configuration first
 
-#include "dcmtk/dcmdata/dcvrui.h"
 #include "dcmtk/dcmfg/concatenationcreator.h" // for writing concatenations
 #include "dcmtk/dcmfg/concatenationloader.h"  // for loading concatenations
-#include "dcmtk/dcmfg/fgfracon.h"             // for frame content functional group macro
 #include "dcmtk/dcmfg/fginterface.h"          // for multi-frame functional group interface
 #include "dcmtk/dcmiod/iodimage.h"            // common image IOD attribute access
 #include "dcmtk/dcmiod/iodmacro.h"
@@ -183,9 +181,10 @@ public:
      *          segmentation. All attributes in equipmentInfo must have
      *          non-empty values.
      *  @param  contentIdentification Basic content identification information
-     *  @param  maximumNumberOfSegments Maximum number of segments that can be added.
-     *          This is used to decide whether the underlying pixel data will use
-     *          8 bit allocated (if maximumNumberOfSegments <= 255) or 16 bit.
+     *  @param  use16Bit Denote whether to use 16 bit pixel data, i.e
+     *          allow for more than 255 segments (labels) in the segmentation
+     *          object (up to 65535). If OFTrue, 16 bit pixel data is used,
+     *          otherwise 8 bit.
      *  @return EC_Normal if creation was successful, error otherwise
      */
     static OFCondition createLabelmapSegmentation(DcmSegmentation*& segmentation,
@@ -193,7 +192,7 @@ public:
                                                   const Uint16 columns,
                                                   const IODGeneralEquipmentModule::EquipmentInfo& equipmentInfo,
                                                   const ContentIdentificationMacro& contentIdentification,
-                                                  const Uint16 maximumNumberOfSegments);
+                                                  const OFBool use16Bit);
 
     /** Factory method to create a fractional segmentation object from the minimal
      *  set of information required. The actual segments and the frame data is
@@ -375,9 +374,6 @@ public:
      */
     template <typename T>
     OFCondition addFrame(T* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation);
-
-    // virtual OFCondition
-    // addFrame(Uint16* pixData, const Uint16 segmentNumber, const OFVector<FGBase*>& perFrameInformation);
 
     /** Return reference to content content identification of this segmentation object
      *  @return Reference to content identification data
