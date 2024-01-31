@@ -145,7 +145,7 @@ struct EctEnhancedCT::WriteVisitorConcatenation
     // Inner class that implements the writing to Concatentions via ConcatenationCreator class
 
     // Constructor, sets parameters the visitor works on in operator()
-    WriteVisitorConcatenation(EctEnhancedCT& m, Uint8*& pixData, size_t& pixDataLength)
+    WriteVisitorConcatenation(EctEnhancedCT& m, Uint16*& pixData, size_t& pixDataLength)
         : m_CT(m)
         , m_pixData(pixData)
         , m_pixDataLength(pixDataLength)
@@ -174,17 +174,17 @@ struct EctEnhancedCT::WriteVisitorConcatenation
         const size_t numBytesFrame = m_CT.m_Frames[0]->getLength();
         // Creates the correct pixel data element, based on the image pixel module used.
         m_pixDataLength = numBytesFrame * numFrames;
-        m_pixData       = new Uint8[m_pixDataLength];
+        m_pixData       = new Uint16[m_pixDataLength / 2];
         if (m_pixData)
         {
-            Uint8* ptr = m_pixData;
+            Uint16* ptr = m_pixData;
             // copy all frames into CT's frame structure
             if (ptr)
             {
                 for (size_t f = 0; f < numFrames; ++f)
                 {
                     memcpy(ptr, m_CT.m_Frames[f]->getPixelData(), numBytesFrame);
-                    ptr += numBytesFrame;
+                    ptr += numBytesFrame / 2;
                 }
                 return EC_Normal;
             }
@@ -196,7 +196,7 @@ struct EctEnhancedCT::WriteVisitorConcatenation
 
     // Members, i.e. parameters to operator()
     EctEnhancedCT& m_CT;
-    Uint8*& m_pixData;
+    Uint16*& m_pixData;
     size_t& m_pixDataLength;
 };
 
@@ -354,7 +354,7 @@ PixelType* EctEnhancedCT::Frames<PixelType>::getFrame(const size_t frameNumber)
 
 // Helper "class" that returns Frames offering API to the pixel's frame bulk
 // data by offering the dedicated data type, e.g. Float32 instead of the
-// internally stored generic Uint8 array.
+// internally stored generic Uint16 array.
 //
 struct EctEnhancedCT::GetFramesVisitor
 {
@@ -1069,7 +1069,7 @@ OFCondition EctEnhancedCT::writeConcatenation(ConcatenationCreator& cc)
     if (!item)
         return EC_MemoryExhausted;
 
-    Uint8* pixData       = NULL;
+    Uint16* pixData       = NULL;
     size_t pixDataLength = 0;
 
     OFCondition result
