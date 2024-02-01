@@ -26,6 +26,7 @@
 #include "dcmtk/dcmiod/ioddef.h"
 #include "dcmtk/oflog/oflog.h"
 #include "dcmtk/ofstd/ofcond.h"
+#include "dcmtk/dcmdata/dcerror.h"
 #include <cstddef>
 
 // ----------------------------------------------------------------------------
@@ -45,7 +46,6 @@ extern DCMTK_DCMIOD_EXPORT OFLogger DCM_dcmiodLogger;
 // Error constants
 // ----------------------------------------------------------------------------
 
-extern DCMTK_DCMIOD_EXPORT const OFConditionConst EC_IllegalCall;
 extern DCMTK_DCMIOD_EXPORT const OFConditionConst IOD_EC_WrongSOPClass;
 extern DCMTK_DCMIOD_EXPORT const OFConditionConst IOD_EC_MissingAttribute;
 extern DCMTK_DCMIOD_EXPORT const OFConditionConst IOD_EC_MissingSequenceData;
