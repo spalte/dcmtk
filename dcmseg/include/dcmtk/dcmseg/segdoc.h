@@ -318,6 +318,12 @@ public:
      */
     virtual DcmSegment* getSegment(const size_t segmentNumber);
 
+    /** Get all segments
+     *  @param  segments The resulting segments
+     */
+    virtual void getSegments(OFVector<DcmSegment*> segments);
+
+
     /** Get logical segment number by providing a pointer to a given segment
      *  @param  segment The segment to find the logical segment number for
      *  @param  segmentNumber The segment number. 0 if segment could not be found.

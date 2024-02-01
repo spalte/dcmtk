@@ -957,6 +957,16 @@ OFBool DcmSegmentation::getSegmentNumber(const DcmSegment* segment, size_t& segm
     return OFFalse;
 }
 
+void DcmSegmentation::getSegments(OFVector<DcmSegment*>& segments)
+{
+    std::map<Uint16, DcmSegment*>::iterator it = m_Segments.begin();
+    while (it != m_Segments.end())
+    {
+        segments.push_back(it->second);
+        it++;
+    }
+}
+
 OFCondition DcmSegmentation::getModality(OFString& value, const long signed int pos) const
 {
     (void)pos;
