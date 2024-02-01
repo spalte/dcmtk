@@ -58,12 +58,6 @@ static void checkCreatedObject(DcmDataset& seg);
 
 OFTEST_FLAGS(dcmseg_bigdim, EF_Slow)
 {
-    // TODO: REMOVE
-    DcmSegmentation* seg2;
-    DcmSegmentation::loadFile("test", seg2);
-
-
-
     // Make sure data dictionary is loaded
     if (!dcmDataDict.isDictionaryLoaded())
     {
