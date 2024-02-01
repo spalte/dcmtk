@@ -74,8 +74,8 @@ public:
         virtual size_t getLength() = 0;
         virtual void* getPixelData() = 0;
         virtual Uint8 bytesPerPixel() = 0;
-        virtual OFCondition getUint8AtIndex(Uint8 &byteVal, const size_t index);
-        virtual OFCondition getUint16AtIndex(Uint16 &shortVal, const size_t index);
+        virtual OFCondition getUint8AtIndex(Uint8 &byteVal, const size_t index) =0;
+        virtual OFCondition getUint16AtIndex(Uint16 &shortVal, const size_t index) =0;
         virtual void setReleaseMemory(OFBool release) = 0;
         virtual OFString print() = 0;
         virtual ~FrameBase() {}
@@ -248,7 +248,5 @@ private:
     ~DcmIODTypes() {};
 };
 
-template <>
-OFCondition DcmIODTypes::Frame<Uint16>::getUint8AtIndex(Uint8 &byteVal, const size_t index);
 
 #endif // IODTYPES_H
