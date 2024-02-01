@@ -45,3 +45,16 @@ makeOFConditionConst(IOD_EC_InvalidElementValue, OFM_dcmiod, 11, OF_error, "Valu
 makeOFConditionConst(IOD_EC_InvalidReference, OFM_dcmiod, 12, OF_error, "One or more invalid SOP references");
 makeOFConditionConst(
     IOD_EC_ReferencesOmitted, OFM_dcmiod, 13, OF_error, "One or more SOP references have been omitted");
+
+template <>
+OFCondition DcmIODTypes::Frame<Uint16>::getUint8AtIndex(Uint8 &byteVal, const size_t index) {
+    if (index >= length) {
+        return EC_IllegalCall;
+    }
+    if (pixData[index] > 255) {
+        DCMIOD_ERROR("Value in the frame is too large to be cast to 8 bits");
+        return EC_IllegalCall;
+    }
+    byteVal = static_cast<Uint8>(pixData[index]);
+    return EC_Normal;
+}

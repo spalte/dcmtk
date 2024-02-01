@@ -26,6 +26,7 @@
 #include "dcmtk/dcmiod/ioddef.h"
 #include "dcmtk/oflog/oflog.h"
 #include "dcmtk/ofstd/ofcond.h"
+#include "dcmtk/dcmdata/dcerror.h"
 #include <cstddef>
 
 // ----------------------------------------------------------------------------
@@ -73,6 +74,8 @@ public:
         virtual size_t getLength() = 0;
         virtual void* getPixelData() = 0;
         virtual Uint8 bytesPerPixel() = 0;
+        virtual OFCondition getUint8AtIndex(Uint8 &byteVal, const size_t index);
+        virtual OFCondition getUint16AtIndex(Uint16 &shortVal, const size_t index);
         virtual void setReleaseMemory(OFBool release) = 0;
         virtual OFString print() = 0;
         virtual ~FrameBase() {}
@@ -140,6 +143,24 @@ public:
         virtual Uint8 bytesPerPixel()
         {
             return sizeof(PixelType);
+        }
+
+        virtual OFCondition getUint8AtIndex(Uint8 &byteVal, const size_t index)
+        {
+            if (index >= length) {
+                return EC_IllegalCall;
+            }
+            byteVal = static_cast<Uint8>(pixData[index]);
+            return EC_Normal;
+        }
+
+        virtual OFCondition getUint16AtIndex(Uint16 &shortVal, const size_t index)
+        {
+            if (index >= length) {
+                return EC_IllegalCall;
+            }
+            shortVal = static_cast<Uint16>(pixData[index]);
+            return EC_Normal;
         }
 
         virtual OFString print()
@@ -226,5 +247,8 @@ private:
      */
     ~DcmIODTypes() {};
 };
+
+template <>
+OFCondition DcmIODTypes::Frame<Uint16>::getUint8AtIndex(Uint8 &byteVal, const size_t index);
 
 #endif // IODTYPES_H
