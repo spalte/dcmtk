@@ -23,7 +23,6 @@
 #define MODCOMMONINSTANCEREF_H
 
 #include "dcmtk/config/osconfig.h"
-#include "dcmtk/dcmdata/dctk.h"
 #include "dcmtk/dcmiod/iodmacro.h"
 #include "dcmtk/dcmiod/iodreferences.h"
 #include "dcmtk/dcmiod/iodrules.h"

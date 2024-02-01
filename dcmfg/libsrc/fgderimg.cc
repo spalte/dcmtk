@@ -22,9 +22,11 @@
 #include "dcmtk/config/osconfig.h"
 
 #include "dcmtk/dcmdata/dcdatutl.h"
+#include "dcmtk/dcmdata/dcdeftag.h"
 #include "dcmtk/dcmdata/dcitem.h"
 #include "dcmtk/dcmfg/fgderimg.h"
 #include "dcmtk/dcmiod/iodutil.h"
+#include "dcmtk/dcmiod/modbase.h"
 
 FGDerivationImage::FGDerivationImage()
     : FGBase(DcmFGTypes::EFG_DERIVATIONIMAGE)
@@ -242,6 +244,7 @@ OFCondition FGDerivationImage::write(DcmItem& item)
 SourceImageItem::SourceImageItem()
     : m_PurposeOfReferenceCode()
     , m_ImageSOPInstanceReference()
+    , m_SpatialLocationsPreserved(DCM_SpatialLocationsPreserved)
 {
 }
 
@@ -254,6 +257,7 @@ SourceImageItem& SourceImageItem::operator=(const SourceImageItem& rhs)
 {
     m_PurposeOfReferenceCode    = rhs.m_PurposeOfReferenceCode;
     m_ImageSOPInstanceReference = rhs.m_ImageSOPInstanceReference;
+    m_SpatialLocationsPreserved = rhs.m_SpatialLocationsPreserved;
     return *this;
 }
 
@@ -261,6 +265,7 @@ void SourceImageItem::clearData()
 {
     m_PurposeOfReferenceCode.clearData();
     m_ImageSOPInstanceReference.clear();
+    m_SpatialLocationsPreserved.clear();
 }
 
 OFCondition SourceImageItem::check() const
@@ -281,6 +286,10 @@ int SourceImageItem::compare(const SourceImageItem& rhs) const
     {
         result = this->m_ImageSOPInstanceReference.compare(rhs.m_ImageSOPInstanceReference);
     }
+    if (result != 0)
+    {
+        result = this->m_SpatialLocationsPreserved.compare(rhs.m_SpatialLocationsPreserved);
+    }
 
     return result;
 }
@@ -295,11 +304,28 @@ ImageSOPInstanceReferenceMacro& SourceImageItem::getImageSOPInstanceReference()
     return m_ImageSOPInstanceReference;
 }
 
+OFCondition SourceImageItem::getSpatialLocationsPreserved(OFString& value, const long signed int pos) const
+{
+    return DcmIODUtil::getStringValueFromElement(m_SpatialLocationsPreserved, value, pos);
+}
+
+OFCondition SourceImageItem::setSpatialLocationsPreserved(const OFString& value, const OFBool checkValue)
+{
+    OFCondition result = (checkValue) ? DcmCodeString::checkStringValue(value, "1") : EC_Normal;
+    if (result.good())
+        result = m_SpatialLocationsPreserved.putOFStringArray(value);
+    return result;
+}
+
+
 OFCondition SourceImageItem::read(DcmItem& itemOfSourceImageSequence, const OFBool clearOldData)
 {
     /* Re-initialize object */
     if (clearOldData)
         clearData();
+
+    /* Spatial Locations Preserved */
+    DcmIODUtil::getAndCheckElementFromDataset(itemOfSourceImageSequence, m_SpatialLocationsPreserved, "1", "3", "DerivationImageMacro");
 
     /* Read Purpose of Reference Code Sequence */
     DcmIODUtil::readSingleItem<CodeSequenceMacro>(itemOfSourceImageSequence,
@@ -330,6 +356,13 @@ OFCondition SourceImageItem::write(DcmItem& itemOfSourceImageSequence)
     if (result.good())
     {
         m_ImageSOPInstanceReference.write(itemOfSourceImageSequence);
+    }
+
+    /** Currently only writes Spatial Locations Preserved */
+    if (result.good())
+    {
+        result = DcmIODUtil::copyElementToDataset(
+            result, itemOfSourceImageSequence, m_SpatialLocationsPreserved, "1" /* vm */, "3" /*requirement type*/, "DerivationImageMacro");
     }
 
     return result;

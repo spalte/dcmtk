@@ -22,7 +22,9 @@
 #include "dcmtk/config/osconfig.h"
 
 #include "dcmtk/dcmdata/dcdeftag.h"
+#include "dcmtk/dcmdata/dctypes.h"
 #include "dcmtk/dcmdata/dcuid.h"
+#include "dcmtk/dcmdata/dcxfer.h"
 #include "dcmtk/dcmfg/concatenationcreator.h"
 #include "dcmtk/dcmfg/fgderimg.h"
 #include "dcmtk/dcmiod/iodtypes.h"
@@ -849,25 +851,37 @@ OFCondition DcmSegmentation::saveFile(const OFString& filename, const E_Transfer
 #endif
     )
     {
-        DcmXfer ts(writeXfer);
+        if ((writeXfer == EXS_RLELossless) && (m_SegmentationType != DcmSegTypes::ST_LABELMAP))
+        {
+            DcmXfer ts(writeXfer);
 #ifdef WITH_ZLIB
-        DCMSEG_ERROR("Cannot write transfer syntax: " << ts.getXferName()
+            DCMSEG_ERROR("Cannot write transfer syntax: " << ts.getXferName()
                                                       << ": Can only write uncompressed or Deflated)");
 #else
-        if (writeXfer == EXS_DeflatedLittleEndianExplicit)
-        {
-            DCMSEG_ERROR("Cannot write transfer syntax: "
-                         << ts.getXferName() << ": Deflate (ZLIB) support disabled, can only write uncompressed");
-        }
+            if (writeXfer == EXS_DeflatedLittleEndianExplicit)
+            {
+                DCMSEG_ERROR("Cannot write transfer syntax: "
+                             << ts.getXferName() << ": Deflate (ZLIB) support disabled, can only write uncompressed");
+            }
 #endif
-        return EC_CannotChangeRepresentation;
+            return EC_CannotChangeRepresentation;
+        }
     }
 
     DcmFileFormat dcmff;
     OFCondition result = writeDataset(*(dcmff.getDataset()));
     if (result.good())
     {
-        result = dcmff.saveFile(filename.c_str(), writeXfer);
+        if (dcmff.chooseRepresentation(writeXfer, NULL).good() && dcmff.getDataset()->canWriteXfer(writeXfer))
+        {
+            result = dcmff.saveFile(filename.c_str(), writeXfer, EET_ExplicitLength);
+        }
+        else
+        {
+            DcmXfer ts(writeXfer);
+            DCMSEG_ERROR("Cannot write transfer syntax: " << ts.getXferName());
+            result = EC_CannotChangeRepresentation;
+        }
     }
     if (result.bad())
     {
@@ -1230,12 +1244,10 @@ OFCondition DcmSegmentation::getAndCheckImagePixelAttributes(DcmItem& dataset,
         pixelRep = 0;
     }
     if ((colorModel != "MONOCHROME2")
-        || ((colorModel != "PALETTE") && (m_SegmentationType == DcmSegTypes::ST_LABELMAP)))
+        && ((colorModel != "PALETTE") && (m_SegmentationType == DcmSegTypes::ST_LABELMAP)))
     {
-        DCMSEG_WARN("Photometric Interpretation is not set correctly (ignored), assuming value MONOCHROME2 or PALETTE "
-                    "as required "
-                    "for segmentation objects");
-        colorModel = "MONOCHROME2";
+        DCMSEG_WARN("Photometric Interpretation is not set correctly (" << colorModel << "): Must be MONOCHROME2 or PALETTE (only Labelmap segmentations)");
+        fail = OFTrue;
     }
     if (rows == 0)
     {
