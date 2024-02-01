@@ -321,7 +321,7 @@ public:
     /** Get all segments
      *  @param  segments The resulting segments
      */
-    virtual void getSegments(OFVector<DcmSegment*> segments);
+    virtual void getSegments(OFVector<DcmSegment*>& segments);
 
 
     /** Get logical segment number by providing a pointer to a given segment
