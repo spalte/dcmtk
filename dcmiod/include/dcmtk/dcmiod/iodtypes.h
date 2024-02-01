@@ -45,6 +45,7 @@ extern DCMTK_DCMIOD_EXPORT OFLogger DCM_dcmiodLogger;
 // Error constants
 // ----------------------------------------------------------------------------
 
+extern DCMTK_DCMIOD_EXPORT const OFConditionConst EC_IllegalCall;
 extern DCMTK_DCMIOD_EXPORT const OFConditionConst IOD_EC_WrongSOPClass;
 extern DCMTK_DCMIOD_EXPORT const OFConditionConst IOD_EC_MissingAttribute;
 extern DCMTK_DCMIOD_EXPORT const OFConditionConst IOD_EC_MissingSequenceData;
@@ -73,8 +74,8 @@ public:
         virtual size_t getLength() = 0;
         virtual void* getPixelData() = 0;
         virtual Uint8 bytesPerPixel() = 0;
-        virtual Uint8 getUint8AtIndex(size_t index) = 0;
-        virtual Uint16 getUint16AtIndex(size_t index) = 0;
+        virtual OFCondition getUint8AtIndex(Uint8 &byteVal, const size_t index);
+        virtual OFCondition getUint16AtIndex(Uint16 &shortVal, const size_t index);
         virtual void setReleaseMemory(OFBool release) = 0;
         virtual OFString print() = 0;
         virtual ~FrameBase() {}
@@ -144,14 +145,22 @@ public:
             return sizeof(PixelType);
         }
 
-        virtual Uint8 getUint8AtIndex(size_t index)
+        virtual OFCondition getUint8AtIndex(Uint8 &byteVal, const size_t index)
         {
-            return static_cast<Uint8>(pixData[index]);
+            if (index >= length) {
+                return EC_IllegalCall;
+            }
+            byteVal = static_cast<Uint8>(pixData[index]);
+            return EC_Normal;
         }
 
-        virtual Uint16 getUint16AtIndex(size_t index)
+        virtual OFCondition getUint16AtIndex(Uint16 &shortVal, const size_t index)
         {
-            return static_cast<Uint16>(pixData[index]);
+            if (index >= length) {
+                return EC_IllegalCall;
+            }
+            shortVal = static_cast<Uint16>(pixData[index]);
+            return EC_Normal;
         }
 
         virtual OFString print()
@@ -238,5 +247,8 @@ private:
      */
     ~DcmIODTypes() {};
 };
+
+template <>
+OFCondition DcmIODTypes::Frame<Uint16>::getUint8AtIndex(Uint8 &byteVal, const size_t index);
 
 #endif // IODTYPES_H
