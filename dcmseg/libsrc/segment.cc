@@ -88,6 +88,7 @@ OFCondition DcmSegment::read(DcmItem& item, const OFBool clearOldData)
         item, m_RecommendedDisplayCIELabValue, m_Rules.getByTag(DCM_RecommendedDisplayCIELabValue));
     DcmIODUtil::getAndCheckElementFromDataset(item, m_TrackingID, m_Rules.getByTag(DCM_TrackingID));
     DcmIODUtil::getAndCheckElementFromDataset(item, m_TrackingUID, m_Rules.getByTag(DCM_TrackingUID));
+    DcmIODUtil::getAndCheckElementFromDataset(item, m_SegmentNumber, m_Rules.getByTag(DCM_SegmentNumber));
 
     return EC_Normal;
 }

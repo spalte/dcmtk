@@ -33,9 +33,9 @@
 #include "dcmtk/dcmiod/iodmacro.h"
 #include "dcmtk/dcmdata/dcxfer.h"
 #include "dcmtk/ofstd/ofmem.h"
-#include "dcmtk/ofstd/ofstrutl.h"
 #include "dcmtk/ofstd/oftempf.h"
 #include "dcmtk/ofstd/oftest.h"
+#include <iostream>
 
 static const Uint8 NUM_ROWS             = 10;
 static const Uint8 NUM_COLS             = 10;
@@ -95,6 +95,10 @@ OFTEST(dcmseg_roundtrip)
     if (seg)
     {
         dset_dump = write(seg, *ds);
+        std::cout << "Dump after loading: " << dset_dump << std::endl;
+        // wait for keypress
+        std::cin.get();
+
         checkCreatedObject(dset_dump);
     }
 
@@ -721,6 +725,7 @@ static void prepareExpectedDump()
     EXPECTED_DUMP += "(fffe,e0dd) na (SequenceDelimitationItem for re-encod.) #   0, 0 SequenceDelimitationItem\n";
     EXPECTED_DUMP += "(0062,000e) US 255                                      #   2, 1 MaximumFractionalValue\n";
     EXPECTED_DUMP += "(0062,0010) CS [OCCUPANCY]                              #  10, 1 SegmentationFractionalType\n";
+    EXPECTED_DUMP += "(0062,0013) CS [UNDEFINED]                              #  10, 1 SegmentsOverlap\n";
     EXPECTED_DUMP += "(0070,0080) CS [LABEL]                                  #   6, 1 ContentLabel\n";
     EXPECTED_DUMP += "(0070,0081) LO [DESCRIPTION]                            #  12, 1 ContentDescription\n";
     EXPECTED_DUMP += "(0070,0084) PN [Doe^John]                               #   8, 1 ContentCreatorName\n";
