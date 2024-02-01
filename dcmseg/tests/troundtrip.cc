@@ -95,10 +95,6 @@ OFTEST(dcmseg_roundtrip)
     if (seg)
     {
         dset_dump = write(seg, *ds);
-        std::cout << "Dump after loading: " << dset_dump << std::endl;
-        // wait for keypress
-        std::cin.get();
-
         checkCreatedObject(dset_dump);
     }
 
