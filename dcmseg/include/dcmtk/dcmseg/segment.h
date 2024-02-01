@@ -257,6 +257,16 @@ public:
      */
     virtual OFCondition setTrackingUID(const OFString& value, const OFBool checkValue = OFTrue);
 
+    /** THIS IS ONLY FOR INTERNAL USE. DO NOT USE this as a regular API user.
+     *  Get Segment Number as read from the Segment Sequence for this segment.
+     *  It may be different from the Segment Number as returned by getSegmentNumber(),
+     *  i.e. do not rely on this method for anything.
+     *  @param  value Value to be set (single value only) or "" for no value
+     *  @param  checkValue Check 'value' for conformance with VR (UI) and VM (1) if enabled
+     *  @return EC_Normal if successful, an error code otherwise
+     */
+    virtual Uint16 getSegmentNumberRead();
+
     /// The utility class must access the protected default constructor
     friend class DcmIODUtil;
 
@@ -288,6 +298,12 @@ private:
 
     /// The segmentation document where this segment is located in
     DcmSegmentation* m_SegmentationDoc;
+
+    /// The segment number as read from the Segment Number attribute.
+    /// This attribute only holds the number read from the file/item,
+    /// and will be updated only during a write process. It is not meant
+    /// to be used by the API user at all but only for internal purposes.
+    DcmUnsignedShort m_SegmentNumber;
 
     /// Segment Description Macro
     SegmentDescriptionMacro m_SegmentDescription;

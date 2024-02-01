@@ -24,20 +24,22 @@
 
 #include "dcmtk/config/osconfig.h" // include OS configuration first
 
+
 #include "dcmtk/dcmfg/concatenationcreator.h" // for writing concatenations
 #include "dcmtk/dcmfg/concatenationloader.h"  // for loading concatenations
 #include "dcmtk/dcmfg/fginterface.h"          // for multi-frame functional group interface
 #include "dcmtk/dcmiod/iodimage.h"            // common image IOD attribute access
-#include "dcmtk/dcmiod/iodmacro.h"
-#include "dcmtk/dcmiod/modenhequipment.h" // for enhanced general equipment module
-#include "dcmtk/dcmiod/modimagepixel.h"
+#include "dcmtk/dcmiod/iodmacro.h"            // various macros
+#include "dcmtk/dcmiod/modenhequipment.h"     // for enhanced general equipment module
+#include "dcmtk/dcmiod/modimagepixel.h"       //  for image pixel module
 #include "dcmtk/dcmiod/modmultiframedimension.h" // for multi-frame dimension module
 #include "dcmtk/dcmiod/modmultiframefg.h"        // for multi-frame functional group module
 #include "dcmtk/dcmiod/modsegmentationseries.h"  // for segmentation series module
-#include "dcmtk/dcmseg/segdef.h"
-#include "dcmtk/dcmseg/segment.h"
+#include "dcmtk/dcmseg/segdef.h"   //for definitions
+#include "dcmtk/dcmseg/segment.h"  // for DcmSegment class
 #include "dcmtk/dcmseg/segtypes.h" // for segmentation data types
-#include "dcmtk/ofstd/ofvector.h"  // for OFVector
+#include "dcmtk/ofstd/ofvector.h"  // for OFVector class
+#include <map>                     // for map class (TODO: replace with OFMap, needs reverse iterators)
 
 class FGSegmentation;
 class FGDerivationImage;
@@ -347,7 +349,19 @@ public:
     /** Add segment to segmentation object
      *  @param  seg The segment that should be added
      *  @param  segmentNumber The logical segment number that was assigned for
-     *          this segment. Contains 0 if adding failed.
+     *          this segment. Contains 0 if adding failed. Segment numbers are
+     *          assigned incrementally from 0 onwards. In case a labelmap has been
+     *          loaded which can contain "sparse" segment numbers, the segment
+     *          is assigned the next free (i.e. highest) segment number. This
+     *          means in that case, the segment number is not necessarily the
+     *          next "free" number if there are "holes" in the segment numbers.
+     *          Also, it can mean that a segment cannot be added if the next
+     *          free segment number is larger than 2^16-1 (maximum allowed),
+     *          even if there would be space in the "holes" of the segment numbers.
+     *          Since this use case is very rare (opening a labelmap segmentation and
+     *          then add using the API beyond segment number 65535) we do not
+     *          implement the "hole search" here yet, but might do this is the use
+     *          case arises.
      *  @return EC_Normal if adding was successful, error otherwise
      */
     virtual OFCondition addSegment(DcmSegment* seg, Uint16& segmentNumber);
@@ -673,7 +687,7 @@ private:
     DcmUnsignedShort m_MaximumFractionalValue;
 
     /// Segment descriptions from Segment Sequence
-    OFVector<DcmSegment*> m_Segments;
+    std::map<Uint16, DcmSegment*> m_Segments;
 
     /// Multi-frame Functional Groups high level interface
     FGInterface m_FGInterface;

@@ -34,6 +34,7 @@
 #include "dcmtk/ofstd/ofstring.h"
 #include "dcmtk/ofstd/oftime.h"
 #include "dcmtk/ofstd/oftraits.h" // for OFremove_pointer
+#include <map>
 
 /** Class with helper functions used within the dcmiod module (and beyond)
  */
@@ -839,6 +840,24 @@ public:
         while (it != container.end())
         {
             delete *it;
+            it++;
+        }
+        container.clear();
+    }
+
+
+    /** Deletes all elements from given map and calls "delete" on each
+     *  of them to clear memory.
+     *  @param container  The map that should be cleared. Must contain
+     *         pointers to objects that are allocated on the heap.
+     */
+    template <class Map>
+    static void freeMap(Map& container)
+    {
+        typename Map::iterator it = container.begin();
+        while (it != container.end())
+        {
+            delete (*it).second;
             it++;
         }
         container.clear();

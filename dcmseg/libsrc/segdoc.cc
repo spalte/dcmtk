@@ -26,6 +26,7 @@
 #include "dcmtk/dcmfg/concatenationcreator.h"
 #include "dcmtk/dcmfg/fgderimg.h"
 #include "dcmtk/dcmiod/iodtypes.h"
+#include "dcmtk/dcmseg/segtypes.h"
 #include "dcmtk/ofstd/ofcond.h"
 #include "dcmtk/ofstd/oftypes.h"
 #include "dcmtk/dcmfg/fgseg.h"
@@ -33,6 +34,8 @@
 #include "dcmtk/dcmseg/segdoc.h"
 #include "dcmtk/dcmseg/segment.h"
 #include "dcmtk/dcmseg/segutils.h"
+#include "dcmtk/ofstd/ofutil.h"
+#include <utility>
 
 // default constructor (protected, instance creation via create() function)
 
@@ -592,10 +595,17 @@ OFCondition DcmSegmentation::addSegment(DcmSegment* seg, Uint16& segmentNumber)
     {
         return SG_EC_MaxSegmentsReached;
     }
-
-    // Casting is safe since we made sure number of segments fits into 16 bit
-    segmentNumber = OFstatic_cast(Uint16, m_Segments.size() + 1);
-    m_Segments.push_back(seg);
+    // Use next free segment number and insert
+    std::map<Uint16, DcmSegment*>::reverse_iterator it = m_Segments.rbegin();
+    if (it != m_Segments.rend())
+    {
+        segmentNumber = it->first + 1;
+    }
+    else
+    {
+        segmentNumber = 1;
+    }
+    m_Segments.insert(std::make_pair(segmentNumber, seg));
     return EC_Normal;
 }
 
@@ -730,7 +740,20 @@ DcmSegmentation::addFrame(T* pixData, const Uint16 segmentNumber, const OFVector
         DCMSEG_ERROR("No pixel data provided or zero length");
         result = EC_IllegalParameter;
     }
-    if (segmentNumber > m_Segments.size())
+    if (segmentNumber == 0)
+    {
+        if (m_SegmentationType != DcmSegTypes::ST_LABELMAP)
+        {
+            DCMSEG_ERROR("Cannot add frame: Segment number 0 is not permitted for segmentation type "
+                         << DcmSegTypes::segtype2OFString(m_SegmentationType));
+        }
+        else
+        {
+            DCMSEG_ERROR("Cannot add frame: Segment number 0 is reserved for the background");
+        }
+        result = SG_EC_NoSuchSegment;
+    }
+    else if (getSegment(segmentNumber) == NULL)
     {
         DCMSEG_ERROR("Cannot add frame: Segment with given number " << segmentNumber << " does not exist");
         result = SG_EC_NoSuchSegment;
@@ -902,28 +925,35 @@ OFCondition DcmSegmentation::setContentIdentification(const ContentIdentificatio
 DcmSegment* DcmSegmentation::getSegment(const size_t segmentNumber)
 {
     // check for invalid index
-    if ((segmentNumber == 0) || (segmentNumber > m_Segments.size()))
+    if ( (m_SegmentationType != DcmSegTypes::ST_LABELMAP) && (segmentNumber == 0)  )
+    {
+        DCMSEG_ERROR("Cannot get segment 0: No such Segment Number allowed segmentation if segmentation is of type " << DcmSegTypes::segtype2OFString(m_SegmentationType));
+        return NULL;
+    }
+    std::map<Uint16, DcmSegment*>::iterator it = m_Segments.find(segmentNumber);
+    if (it == m_Segments.end())
     {
         return NULL;
     }
 
-    // logical segment numbering starts with 1, so subtract 1 for vector index
-    return m_Segments[segmentNumber - 1];
+    return it->second;
 }
 
 OFBool DcmSegmentation::getSegmentNumber(const DcmSegment* segment, size_t& segmentNumber)
 {
-    segmentNumber = 0;
-    size_t max    = m_Segments.size();
-    for (size_t count = 0; count < max; count++)
+    if (segment == NULL)
+        return OFFalse;
+
+    std::map<Uint16, DcmSegment*>::iterator it = m_Segments.begin();
+    while (it != m_Segments.end())
     {
-        if (m_Segments.at(count) == segment)
+        if (it->second == segment)
         {
-            segmentNumber = OFstatic_cast(Uint16, count + 1);
+            segmentNumber = it->first;
             return OFTrue;
         }
+        it++;
     }
-    // not found
     return OFFalse;
 }
 
@@ -963,15 +993,51 @@ OFCondition DcmSegmentation::importFromSourceImage(DcmItem& dataset, const bool 
 OFCondition DcmSegmentation::writeSegments(DcmItem& item)
 {
     OFCondition result;
+    // writeSubSequence cannot handle a map, copy to vector instead and use that for this purpose
+    OFVector<DcmSegment*> segments;
+    std::map<Uint16, DcmSegment*>::iterator it = m_Segments.begin();
+    while (it != m_Segments.end())
+    {
+        segments.push_back(it->second);
+        it++;
+    }
     DcmIODUtil::writeSubSequence<OFVector<DcmSegment*>>(
-        result, DCM_SegmentSequence, m_Segments, item, "1-n", "1", "SegmentationImageModule");
+        result, DCM_SegmentSequence, segments, item, "1-n", "1", "SegmentationImageModule");
     return result;
 }
 
 OFCondition DcmSegmentation::readSegments(DcmItem& item)
 {
-    return DcmIODUtil::readSubSequence<OFVector<DcmSegment*>>(
-        item, DCM_SegmentSequence, m_Segments, "1-n", "1", "SegmentationImageModule");
+    // readSubSequence cannot handle a map, read into vector instead and fill into map afterwards
+    OFVector<DcmSegment*> segments;
+
+    OFCondition result = DcmIODUtil::readSubSequence<OFVector<DcmSegment*>>(
+        item, DCM_SegmentSequence, segments, "1-n", "1", "SegmentationImageModule");
+    if (result.good())
+    {
+        for (size_t count = 0; count < segments.size(); count++)
+        {
+            if (result.good())
+            {
+                if (m_Segments.insert(std::make_pair(segments[count]->getSegmentNumberRead(), segments[count])).second
+                    == false)
+                {
+                    DCMSEG_ERROR("Cannot insert segment " << segments[count]->getSegmentNumberRead()
+                                                          << " since it already exists");
+                    result = EC_IllegalCall;
+                    break;
+                }
+            }
+            else
+            {
+                DCMSEG_ERROR("Cannot read segment number for segment " << count << ": " << result.text());
+                result = EC_IllegalCall;
+                break;
+            }
+        }
+    }
+
+    return result;
 }
 
 OFCondition DcmSegmentation::readFrames(DcmItem& dataset)
@@ -1041,48 +1107,6 @@ OFCondition DcmSegmentation::readPixelData(DcmElement* pixelData, const size_t n
     return result;
 }
 
-// template <>
-// OFCondition DcmSegmentation<Uint16>::readPixelData(DcmElement* pixelData, const size_t numFrames, const size_t
-// pixelsPerFrame)
-// {
-//     Uint16* pixels = NULL;
-//     OFCondition result = pixelData->getUint16Array(pixels);
-//     if (result.bad())
-//     {
-//         DCMSEG_ERROR("Cannot read pixel data");
-//         return result;
-//     }
-//     /* Read all frames into dedicated data structure */
-//     switch(m_SegmentationType)
-//     {
-//         case DcmSegTypes::ST_LABELMAP:
-//             for (size_t count = 0; count < numFrames; count++)
-//             {
-//                 DcmIODTypes::Frame<Uint16>* frame = new DcmIODTypes::Frame<Uint16>();
-//                 if (!frame)
-//                 {
-//                     result = EC_MemoryExhausted;
-//                     break;
-//                 }
-//                 frame->length  = pixelsPerFrame;
-//                 frame->pixData = new Uint16[pixelsPerFrame];
-//                 if (!frame->pixData)
-//                 {
-//                     delete frame;
-//                     result = EC_MemoryExhausted;
-//                     break;
-//                 }
-//                 memcpy(frame->pixData, pixels + count * pixelsPerFrame, pixelsPerFrame * 2 /* accomodate for 16 bit
-//                 */); m_Frames.push_back(frame);
-//             }
-//             break;
-//         default:
-//             DCMSEG_ERROR("DICOM only supports 16 bit pixel data for label maps");
-//             result = SG_EC_UnknownSegmentationType;
-//             break;
-//     }
-//     return result;
-// }
 
 OFCondition DcmSegmentation::getAndCheckImagePixelAttributes(DcmItem& dataset,
                                                              Uint16& allocated,
@@ -1411,7 +1435,7 @@ OFCondition DcmSegmentation::writeSegmentationImageModule(DcmItem& dataset)
     OFVector<DcmItem*> segmentItems;
     if (result.good())
     {
-        typename OFVector<DcmSegment*>::iterator it = m_Segments.begin();
+        typename std::map<Uint16, DcmSegment*>::iterator it = m_Segments.begin();
         dataset.findAndDeleteElement(DCM_SegmentSequence);
         for (Uint16 itemCount = 0; (it != m_Segments.end()) && result.good(); itemCount++)
         {
@@ -1419,11 +1443,11 @@ OFCondition DcmSegmentation::writeSegmentationImageModule(DcmItem& dataset)
             dataset.findOrCreateSequenceItem(DCM_SegmentSequence, segmentItem, itemCount);
             if (segmentItem)
             {
-                result = (*it)->write(*segmentItem);
+                result = (*it).second->write(*segmentItem);
                 /* Insert segment number for the segment, starting from 1 and increasing monotonically. */
                 if (result.good())
                 {
-                    segmentItem->putAndInsertUint16(DCM_SegmentNumber, itemCount + 1);
+                    segmentItem->putAndInsertUint16(DCM_SegmentNumber, (*it).first);
                 }
             }
             else
@@ -1446,7 +1470,7 @@ void DcmSegmentation::clearData()
     m_FG.clearData();
     m_FGInterface.clear();
     DcmIODUtil::freeContainer(m_Frames);
-    DcmIODUtil::freeContainer(m_Segments);
+    DcmIODUtil::freeMap(m_Segments);
     m_MaximumFractionalValue.clear();
     m_SegmentationFractionalType = DcmSegTypes::SFT_UNKNOWN;
     m_SegmentationType           = DcmSegTypes::ST_UNKNOWN;
@@ -1623,7 +1647,9 @@ OFBool DcmSegmentation::check(const OFBool checkFGStructure)
         DCMSEG_ERROR("Too many segments defined");
         return OFFalse;
     }
-    if (m_Segments.size() > m_Frames.size())
+    // Check that all segments are referenced by at least one frame.
+    // This is not required for label maps, since they can have unused segments not referenced by any frame.
+    if ( (m_Segments.size() > m_Frames.size()) && (m_SegmentationType != DcmSegTypes::ST_LABELMAP) )
     {
         DCMSEG_ERROR("More segments than frames defined");
         return OFFalse;
